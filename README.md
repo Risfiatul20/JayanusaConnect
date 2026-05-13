@@ -1,58 +1,174 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# JAYANUSA Connect API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Platform Digital BEM Kampus JAYANUSA - Backend API
 
-## About Laravel
+## 📱 Tentang Project
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+JAYANUSA Connect adalah aplikasi mobile berbasis Flutter dan Laravel API yang dirancang untuk menghubungkan mahasiswa, BEM, alumni, dan mitra industri dalam satu ekosistem digital terintegrasi.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### Visi
+Mewujudkan JAYANUSA sebagai kampus yang progresif dan berdaya, yang menjamin setiap mahasiswa didengar, dibekali secara optimal, dan siap bersaing di dunia nyata.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## 🚀 Tech Stack
 
-## Learning Laravel
+- **Framework**: Laravel 11
+- **Database**: MySQL
+- **Authentication**: Laravel Sanctum (Token-based)
+- **API Format**: RESTful JSON API
+- **PHP Version**: 8.3+
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## 📦 Fitur Utama
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 5 Modul Terintegrasi:
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+1. **Aspirasi & Dialog** - Mahasiswa menyampaikan aspirasi dengan tracking status real-time
+2. **Transparansi BEM** - Publikasi program kerja dan laporan anggaran BEM
+3. **Pelatihan & Sertifikasi** - Katalog dan pendaftaran pelatihan teknologi
+4. **Showcase Portofolio** - Platform publikasi karya akademik mahasiswa
+5. **Jejaring Industri** - Info lowongan kerja, magang, dan direktori alumni
 
-## Agentic Development
+## 🗄️ Database Structure (8 Tables)
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+- `users` - Data pengguna (mahasiswa, admin BEM, super admin)
+- `aspirations` - Aspirasi dan pengaduan mahasiswa
+- `bem_programs` - Program kerja BEM
+- `trainings` - Katalog pelatihan
+- `portfolios` - Karya mahasiswa
+- `jobs` - Lowongan kerja dan magang
+- `alumni` - Direktori alumni
+- `registrations` - Pendaftaran pelatihan & mentoring
 
+## 🛠️ Installation
+
+### Prerequisites
+- PHP >= 8.3
+- Composer
+- MySQL
+- Git
+
+### Setup Steps
+
+1. Clone repository
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+git clone https://github.com/Risfiatul20/JayanusaConnect.git
+cd JayanusaConnect
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+2. Install dependencies
+```bash
+composer install
+```
 
-## Contributing
+3. Setup environment
+```bash
+cp .env.example .env
+php artisan key:generate
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+4. Configure database di `.env`
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=jayanusa_connect
+DB_USERNAME=root
+DB_PASSWORD=
+```
 
-## Code of Conduct
+5. Run migrations
+```bash
+php artisan migrate
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+6. Start development server
+```bash
+php artisan serve
+```
 
-## Security Vulnerabilities
+API akan berjalan di `http://localhost:8000`
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## 📚 API Documentation
 
-## License
+### Authentication Endpoints
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/auth/register` | Register mahasiswa baru |
+| POST | `/api/auth/login` | Login pengguna |
+| POST | `/api/auth/logout` | Logout (protected) |
+| GET | `/api/auth/me` | Get user profile (protected) |
+
+### Protected Endpoints (Require Bearer Token)
+
+| Resource | Endpoints |
+|----------|-----------|
+| Aspirations | `/api/aspirations` (CRUD) |
+| BEM Programs | `/api/bem-programs` (CRUD) |
+| Trainings | `/api/trainings` (CRUD) |
+| Portfolios | `/api/portfolios` (CRUD) |
+| Jobs | `/api/jobs` (CRUD) |
+| Alumni | `/api/alumni` (CRUD) |
+| Registrations | `/api/registrations` (CRUD) |
+
+### Special Endpoints
+
+- `PUT /api/aspirations/{id}/status` - Update status aspirasi (admin)
+- `POST /api/trainings/{id}/register` - Daftar pelatihan
+- `POST /api/portfolios/{id}/like` - Like portfolio
+- `PUT /api/registrations/{id}/status` - Update status registrasi (admin)
+
+## 🔐 Authentication
+
+API menggunakan Laravel Sanctum dengan Bearer Token:
+
+```bash
+# Login request
+POST /api/auth/login
+{
+  "email": "mahasiswa@jayanusa.ac.id",
+  "password": "password123"
+}
+
+# Response
+{
+  "success": true,
+  "data": {
+    "user": {...},
+    "token": "1|xxxxxxxxxxxxx",
+    "token_type": "Bearer"
+  }
+}
+
+# Use token in headers
+Authorization: Bearer 1|xxxxxxxxxxxxx
+```
+
+## 👥 User Roles
+
+- **mahasiswa** - Mahasiswa (default role)
+- **admin_bem** - Admin BEM
+- **super_admin** - Super Admin Kampus
+
+## 📝 Development Timeline
+
+- **Week 1-2**: Backend setup + database structure ✅
+- **Week 3-5**: API development (5 modules)
+- **Week 6-7**: Flutter UI + API integration
+- **Week 8**: Testing & documentation
+
+## 🤝 Contributing
+
+Project ini adalah tugas akhir mata kuliah Pemrograman Mobile.
+
+**Developer**: Risfiatul  
+**Dosen Pengampu**: Isnardi, M.Kom  
+**Institusi**: STMIK/AMIK JAYANUSA  
+**Tahun Akademik**: 2024/2025
+
+## 📄 License
+
+This project is developed for educational purposes.
+
+---
+
+**Repository**: [https://github.com/Risfiatul20/JayanusaConnect](https://github.com/Risfiatul20/JayanusaConnect)
