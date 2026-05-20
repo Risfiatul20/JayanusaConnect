@@ -1,0 +1,166 @@
+{
+  "info": {
+    "name": "JAYANUSA Connect - 2. Aspirasi",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8000", "type": "string" },
+    { "key": "token_mahasiswa", "value": "ISI_TOKEN_MAHASISWA_DISINI", "type": "string" },
+    { "key": "token_admin", "value": "ISI_TOKEN_ADMIN_DISINI", "type": "string" },
+    { "key": "aspiration_id", "value": "1", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Kirim Aspirasi Baru (Mahasiswa)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "var res = pm.response.json();",
+              "if(res.success){ pm.collectionVariables.set('aspiration_id', res.data.id); }",
+              "pm.test('Status 201', function(){ pm.response.to.have.status(201); });",
+              "pm.test('Status aspirasi = dikirim', function(){ pm.expect(res.data.status).to.eql('dikirim'); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Accept", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }
+        ],
+        "url": { "raw": "{{base_url}}/api/aspirations", "host": ["{{base_url}}"], "path": ["api","aspirations"] },
+        "body": {
+          "mode": "raw",
+          "options": { "raw": { "language": "json" } },
+          "raw": "{\n  \"title\": \"Permohonan Penambahan Fasilitas Parkir\",\n  \"content\": \"Fasilitas parkir di kampus sangat kurang, mohon ditambah area parkir khususnya untuk motor mahasiswa.\",\n  \"category\": \"Fasilitas\"\n}"
+        }
+      }
+    },
+    {
+      "name": "List Aspirasi Saya (Mahasiswa)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Accept", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }
+        ],
+        "url": { "raw": "{{base_url}}/api/aspirations", "host": ["{{base_url}}"], "path": ["api","aspirations"] }
+      }
+    },
+    {
+      "name": "List Aspirasi Filter Status (Mahasiswa)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Accept", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/aspirations?status=dikirim",
+          "host": ["{{base_url}}"], "path": ["api","aspirations"],
+          "query": [{ "key": "status", "value": "dikirim" }]
+        }
+      }
+    },
+    {
+      "name": "List SEMUA Aspirasi (Admin)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Accept", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token_admin}}" }
+        ],
+        "url": { "raw": "{{base_url}}/api/aspirations", "host": ["{{base_url}}"], "path": ["api","aspirations"] }
+      }
+    },
+    {
+      "name": "Detail Aspirasi",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Accept", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }
+        ],
+        "url": { "raw": "{{base_url}}/api/aspirations/{{aspiration_id}}", "host": ["{{base_url}}"], "path": ["api","aspirations","{{aspiration_id}}"] }
+      }
+    },
+    {
+      "name": "Edit Aspirasi (Mahasiswa - masih dikirim)",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Accept", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }
+        ],
+        "url": { "raw": "{{base_url}}/api/aspirations/{{aspiration_id}}", "host": ["{{base_url}}"], "path": ["api","aspirations","{{aspiration_id}}"] },
+        "body": {
+          "mode": "raw",
+          "options": { "raw": { "language": "json" } },
+          "raw": "{\n  \"title\": \"Permohonan Penambahan Fasilitas Parkir (Diperbarui)\",\n  \"content\": \"Fasilitas parkir sangat kurang, mohon ditambah area parkir untuk motor dan mobil mahasiswa.\",\n  \"category\": \"Fasilitas\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Update Status Aspirasi (Admin) - diproses",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Accept", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token_admin}}" }
+        ],
+        "url": { "raw": "{{base_url}}/api/aspirations/{{aspiration_id}}/status", "host": ["{{base_url}}"], "path": ["api","aspirations","{{aspiration_id}}","status"] },
+        "body": {
+          "mode": "raw",
+          "options": { "raw": { "language": "json" } },
+          "raw": "{\n  \"status\": \"diproses\",\n  \"admin_notes\": \"Aspirasi sedang dikaji oleh tim BEM dan pihak kampus.\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Update Status Aspirasi (Admin) - selesai",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Accept", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token_admin}}" }
+        ],
+        "url": { "raw": "{{base_url}}/api/aspirations/{{aspiration_id}}/status", "host": ["{{base_url}}"], "path": ["api","aspirations","{{aspiration_id}}","status"] },
+        "body": {
+          "mode": "raw",
+          "options": { "raw": { "language": "json" } },
+          "raw": "{\n  \"status\": \"selesai\",\n  \"admin_notes\": \"Penambahan area parkir sudah disetujui dan akan direalisasikan semester depan.\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Hapus Aspirasi (Mahasiswa)",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "Accept", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }
+        ],
+        "url": { "raw": "{{base_url}}/api/aspirations/{{aspiration_id}}", "host": ["{{base_url}}"], "path": ["api","aspirations","{{aspiration_id}}"] }
+      }
+    },
+    {
+      "name": "[TEST] Update Status sbg Mahasiswa - Harus 403",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Accept", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }
+        ],
+        "url": { "raw": "{{base_url}}/api/aspirations/1/status", "host": ["{{base_url}}"], "path": ["api","aspirations","1","status"] },
+        "body": {
+          "mode": "raw",
+          "options": { "raw": { "language": "json" } },
+          "raw": "{\n  \"status\": \"selesai\"\n}"
+        }
+      }
+    }
+  ]
+}

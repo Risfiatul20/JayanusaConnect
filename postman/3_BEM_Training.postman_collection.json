@@ -1,0 +1,260 @@
+{
+  "info": {
+    "name": "JAYANUSA Connect - 3. BEM Programs & Training",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8000", "type": "string" },
+    { "key": "token_mahasiswa", "value": "ISI_TOKEN_MAHASISWA_DISINI", "type": "string" },
+    { "key": "token_admin", "value": "ISI_TOKEN_ADMIN_DISINI", "type": "string" },
+    { "key": "program_id", "value": "1", "type": "string" },
+    { "key": "training_id", "value": "1", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "BEM PROGRAMS",
+      "item": [
+        {
+          "name": "List Program Kerja BEM",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/bem-programs", "host": ["{{base_url}}"], "path": ["api","bem-programs"] }
+          }
+        },
+        {
+          "name": "List BEM Programs Filter Category",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/bem-programs?category=Pelatihan Teknologi",
+              "host": ["{{base_url}}"], "path": ["api","bem-programs"],
+              "query": [{ "key": "category", "value": "Pelatihan Teknologi" }]
+            }
+          }
+        },
+        {
+          "name": "Detail Program Kerja BEM",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/bem-programs/{{program_id}}", "host": ["{{base_url}}"], "path": ["api","bem-programs","{{program_id}}"] }
+          }
+        },
+        {
+          "name": "Tambah Program Kerja (Admin - tanpa file)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "if(res.success){ pm.collectionVariables.set('program_id', res.data.id); }",
+                  "pm.test('Status 201', function(){ pm.response.to.have.status(201); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_admin}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/bem-programs", "host": ["{{base_url}}"], "path": ["api","bem-programs"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"title\": \"Seminar Nasional Teknologi 2024\",\n  \"description\": \"Seminar nasional yang menghadirkan pembicara dari perusahaan teknologi terkemuka.\",\n  \"budget\": 20000000,\n  \"realization\": 0,\n  \"progress\": 10,\n  \"start_date\": \"2024-08-01\",\n  \"end_date\": \"2024-08-01\",\n  \"category\": \"Seminar\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Tambah Program Kerja + Upload PDF (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_admin}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/bem-programs", "host": ["{{base_url}}"], "path": ["api","bem-programs"] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "title", "value": "Program Kerja dengan Dokumen", "type": "text" },
+                { "key": "description", "value": "Program kerja dengan laporan PDF terlampir.", "type": "text" },
+                { "key": "budget", "value": "10000000", "type": "text" },
+                { "key": "category", "value": "Dokumentasi", "type": "text" },
+                { "key": "document", "src": [], "type": "file", "description": "Upload file PDF max 5MB" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Program Kerja (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_admin}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/bem-programs/{{program_id}}", "host": ["{{base_url}}"], "path": ["api","bem-programs","{{program_id}}"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"progress\": 50,\n  \"realization\": 10000000\n}"
+            }
+          }
+        },
+        {
+          "name": "Hapus Program Kerja (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_admin}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/bem-programs/{{program_id}}", "host": ["{{base_url}}"], "path": ["api","bem-programs","{{program_id}}"] }
+          }
+        },
+        {
+          "name": "[TEST] Tambah Program sbg Mahasiswa - Harus 403",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/bem-programs", "host": ["{{base_url}}"], "path": ["api","bem-programs"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"title\": \"Test\",\n  \"description\": \"Test\",\n  \"budget\": 1000\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "TRAININGS",
+      "item": [
+        {
+          "name": "List Pelatihan",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/trainings", "host": ["{{base_url}}"], "path": ["api","trainings"] }
+          }
+        },
+        {
+          "name": "List Pelatihan Filter Category",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/trainings?category=Programming&status=open",
+              "host": ["{{base_url}}"], "path": ["api","trainings"],
+              "query": [
+                { "key": "category", "value": "Programming" },
+                { "key": "status", "value": "open" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Detail Pelatihan",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/trainings/{{training_id}}", "host": ["{{base_url}}"], "path": ["api","trainings","{{training_id}}"] }
+          }
+        },
+        {
+          "name": "Tambah Pelatihan (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "if(res.success){ pm.collectionVariables.set('training_id', res.data.id); }",
+                  "pm.test('Status 201', function(){ pm.response.to.have.status(201); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_admin}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/trainings", "host": ["{{base_url}}"], "path": ["api","trainings"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"title\": \"Workshop Laravel API Development\",\n  \"category\": \"Programming\",\n  \"description\": \"Workshop membangun REST API dengan Laravel 11 dari dasar hingga deployment.\",\n  \"quota\": 20,\n  \"date\": \"2024-09-15 09:00:00\",\n  \"location\": \"Lab Komputer 2, Gedung B\",\n  \"instructor\": \"Pak Isnardi, M.Kom\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Daftar Pelatihan (Mahasiswa) - TRANSAKSI",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/trainings/{{training_id}}/register", "host": ["{{base_url}}"], "path": ["api","trainings","{{training_id}}","register"] }
+          }
+        },
+        {
+          "name": "[TEST] Daftar Lagi - Harus Error Duplikat",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/trainings/{{training_id}}/register", "host": ["{{base_url}}"], "path": ["api","trainings","{{training_id}}","register"] }
+          }
+        },
+        {
+          "name": "Update Status Pelatihan (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_admin}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/trainings/{{training_id}}", "host": ["{{base_url}}"], "path": ["api","trainings","{{training_id}}"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"status\": \"closed\"\n}"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
