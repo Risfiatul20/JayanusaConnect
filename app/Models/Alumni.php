@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class Alumni extends Model
 {
+    // Paksa nama tabel karena Laravel auto-pluralize jadi 'alumnis'
+    protected $table = 'alumni';
+
     protected $fillable = [
         'name',
         'nim',
