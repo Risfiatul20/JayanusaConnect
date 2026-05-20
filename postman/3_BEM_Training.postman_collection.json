@@ -1,6 +1,8 @@
 {
   "info": {
+    "_postman_id": "a1b2c3d4-0003-0003-0003-000000000003",
     "name": "JAYANUSA Connect - 3. BEM Programs & Training",
+    "description": "Endpoint BEM Programs dan Pelatihan dengan file upload dan pendaftaran",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [

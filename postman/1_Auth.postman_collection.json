@@ -1,6 +1,8 @@
 {
   "info": {
+    "_postman_id": "a1b2c3d4-0001-0001-0001-000000000001",
     "name": "JAYANUSA Connect - 1. Auth",
+    "description": "Endpoint autentikasi: register, login, logout, get profile",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -10,17 +12,25 @@
   ],
   "item": [
     {
-      "name": "Register Mahasiswa",
+      "name": "Register Mahasiswa Baru",
       "request": {
         "method": "POST",
-        "header": [{ "key": "Accept", "value": "application/json" }],
-        "url": { "raw": "{{base_url}}/api/auth/register", "host": ["{{base_url}}"], "path": ["api","auth","register"] },
+        "header": [
+          { "key": "Accept", "value": "application/json" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/auth/register",
+          "host": ["{{base_url}}"],
+          "path": ["api", "auth", "register"]
+        },
         "body": {
           "mode": "raw",
           "options": { "raw": { "language": "json" } },
           "raw": "{\n  \"name\": \"Mahasiswa Baru\",\n  \"nim\": \"2024001\",\n  \"email\": \"mahasiswabaru@jayanusa.ac.id\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\",\n  \"phone\": \"081234567899\",\n  \"angkatan\": \"2024\",\n  \"prodi\": \"Sistem Informasi\"\n}"
         }
-      }
+      },
+      "response": []
     },
     {
       "name": "Login Mahasiswa",
@@ -28,24 +38,37 @@
         {
           "listen": "test",
           "script": {
+            "type": "text/javascript",
             "exec": [
               "var res = pm.response.json();",
-              "if(res.success){ pm.collectionVariables.set('token_mahasiswa', res.data.token); }",
-              "pm.test('Login berhasil', function(){ pm.response.to.have.status(200); });"
+              "if (res.success) {",
+              "    pm.collectionVariables.set('token_mahasiswa', res.data.token);",
+              "    console.log('Token mahasiswa tersimpan');",
+              "}",
+              "pm.test('Status 200', function() { pm.response.to.have.status(200); });",
+              "pm.test('Success true', function() { pm.expect(res.success).to.be.true; });"
             ]
           }
         }
       ],
       "request": {
         "method": "POST",
-        "header": [{ "key": "Accept", "value": "application/json" }],
-        "url": { "raw": "{{base_url}}/api/auth/login", "host": ["{{base_url}}"], "path": ["api","auth","login"] },
+        "header": [
+          { "key": "Accept", "value": "application/json" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/auth/login",
+          "host": ["{{base_url}}"],
+          "path": ["api", "auth", "login"]
+        },
         "body": {
           "mode": "raw",
           "options": { "raw": { "language": "json" } },
           "raw": "{\n  \"email\": \"budi@mahasiswa.jayanusa.ac.id\",\n  \"password\": \"password123\"\n}"
         }
-      }
+      },
+      "response": []
     },
     {
       "name": "Login Admin BEM",
@@ -53,35 +76,52 @@
         {
           "listen": "test",
           "script": {
+            "type": "text/javascript",
             "exec": [
               "var res = pm.response.json();",
-              "if(res.success){ pm.collectionVariables.set('token_admin', res.data.token); }",
-              "pm.test('Login admin berhasil', function(){ pm.response.to.have.status(200); });"
+              "if (res.success) {",
+              "    pm.collectionVariables.set('token_admin', res.data.token);",
+              "    console.log('Token admin tersimpan');",
+              "}",
+              "pm.test('Status 200', function() { pm.response.to.have.status(200); });"
             ]
           }
         }
       ],
       "request": {
         "method": "POST",
-        "header": [{ "key": "Accept", "value": "application/json" }],
-        "url": { "raw": "{{base_url}}/api/auth/login", "host": ["{{base_url}}"], "path": ["api","auth","login"] },
+        "header": [
+          { "key": "Accept", "value": "application/json" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/auth/login",
+          "host": ["{{base_url}}"],
+          "path": ["api", "auth", "login"]
+        },
         "body": {
           "mode": "raw",
           "options": { "raw": { "language": "json" } },
           "raw": "{\n  \"email\": \"admin.bem@jayanusa.ac.id\",\n  \"password\": \"password123\"\n}"
         }
-      }
+      },
+      "response": []
     },
     {
-      "name": "Get Profile (Me)",
+      "name": "Get Profile - Me",
       "request": {
         "method": "GET",
         "header": [
           { "key": "Accept", "value": "application/json" },
           { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }
         ],
-        "url": { "raw": "{{base_url}}/api/auth/me", "host": ["{{base_url}}"], "path": ["api","auth","me"] }
-      }
+        "url": {
+          "raw": "{{base_url}}/api/auth/me",
+          "host": ["{{base_url}}"],
+          "path": ["api", "auth", "me"]
+        }
+      },
+      "response": []
     },
     {
       "name": "Logout",
@@ -91,29 +131,49 @@
           { "key": "Accept", "value": "application/json" },
           { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }
         ],
-        "url": { "raw": "{{base_url}}/api/auth/logout", "host": ["{{base_url}}"], "path": ["api","auth","logout"] }
-      }
+        "url": {
+          "raw": "{{base_url}}/api/auth/logout",
+          "host": ["{{base_url}}"],
+          "path": ["api", "auth", "logout"]
+        }
+      },
+      "response": []
     },
     {
-      "name": "[TEST] Login Email Salah - Harus 422",
+      "name": "[TEST] Login Password Salah - Expect 422",
       "request": {
         "method": "POST",
-        "header": [{ "key": "Accept", "value": "application/json" }],
-        "url": { "raw": "{{base_url}}/api/auth/login", "host": ["{{base_url}}"], "path": ["api","auth","login"] },
+        "header": [
+          { "key": "Accept", "value": "application/json" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/auth/login",
+          "host": ["{{base_url}}"],
+          "path": ["api", "auth", "login"]
+        },
         "body": {
           "mode": "raw",
           "options": { "raw": { "language": "json" } },
-          "raw": "{\n  \"email\": \"salah@email.com\",\n  \"password\": \"wrongpassword\"\n}"
+          "raw": "{\n  \"email\": \"budi@mahasiswa.jayanusa.ac.id\",\n  \"password\": \"wrongpassword\"\n}"
         }
-      }
+      },
+      "response": []
     },
     {
-      "name": "[TEST] Akses Tanpa Token - Harus 401",
+      "name": "[TEST] Akses Tanpa Token - Expect 401",
       "request": {
         "method": "GET",
-        "header": [{ "key": "Accept", "value": "application/json" }],
-        "url": { "raw": "{{base_url}}/api/auth/me", "host": ["{{base_url}}"], "path": ["api","auth","me"] }
-      }
+        "header": [
+          { "key": "Accept", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/auth/me",
+          "host": ["{{base_url}}"],
+          "path": ["api", "auth", "me"]
+        }
+      },
+      "response": []
     }
   ]
 }

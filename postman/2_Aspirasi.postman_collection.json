@@ -1,6 +1,8 @@
 {
   "info": {
+    "_postman_id": "a1b2c3d4-0002-0002-0002-000000000002",
     "name": "JAYANUSA Connect - 2. Aspirasi",
+    "description": "Endpoint aspirasi mahasiswa dengan tracking status transaksi",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [

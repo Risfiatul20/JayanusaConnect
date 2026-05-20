@@ -1,6 +1,8 @@
 {
   "info": {
+    "_postman_id": "a1b2c3d4-0004-0004-0004-000000000004",
     "name": "JAYANUSA Connect - 4. Portfolio, Jobs, Alumni, Registration",
+    "description": "Endpoint Portfolio, Lowongan Kerja, Alumni, dan Registrasi Mentoring",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
