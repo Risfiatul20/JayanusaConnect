@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\BemProgram;
+use App\Models\BemProgramRating;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -149,6 +150,62 @@ class BemProgramController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Program kerja BEM berhasil dihapus.',
+        ]);
+    }
+
+    /**
+     * POST /api/bem-programs/{bem_program}/rate
+     * Mahasiswa beri rating & komentar pada program BEM.
+     * Satu user hanya bisa rating satu program sekali (update jika sudah ada).
+     */
+    public function rate(Request $request, BemProgram $bemProgram)
+    {
+        $request->validate([
+            'rating'  => 'required|integer|min:1|max:5',
+            'comment' => 'nullable|string|max:500',
+        ]);
+
+        // Update jika sudah pernah rating, create jika belum
+        $rating = BemProgramRating::updateOrCreate(
+            [
+                'bem_program_id' => $bemProgram->id,
+                'user_id'        => $request->user()->id,
+            ],
+            [
+                'rating'  => $request->rating,
+                'comment' => $request->comment,
+            ]
+        );
+
+        // Hitung rata-rata rating
+        $avgRating = BemProgramRating::where('bem_program_id', $bemProgram->id)->avg('rating');
+
+        return response()->json([
+            'success'    => true,
+            'message'    => 'Rating berhasil diberikan.',
+            'avg_rating' => round($avgRating, 1),
+            'data'       => $rating->load('user:id,name'),
+        ], 201);
+    }
+
+    /**
+     * GET /api/bem-programs/{bem_program}/ratings
+     * Ambil semua rating & komentar pada program BEM.
+     */
+    public function ratings(BemProgram $bemProgram)
+    {
+        $ratings = BemProgramRating::with('user:id,name,photo')
+            ->where('bem_program_id', $bemProgram->id)
+            ->latest()
+            ->paginate(10);
+
+        $avgRating = BemProgramRating::where('bem_program_id', $bemProgram->id)->avg('rating');
+
+        return response()->json([
+            'success'    => true,
+            'message'    => 'Rating berhasil diambil.',
+            'avg_rating' => round((float) $avgRating, 1),
+            'data'       => $ratings,
         ]);
     }
 }

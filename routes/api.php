@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AspirationController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BemProgramController;
 use App\Http\Controllers\Api\JobController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PortfolioController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\RegistrationController;
@@ -36,15 +37,17 @@ Route::middleware('auth:sanctum')->group(function () {
     )->middleware('role:admin_bem,super_admin');
 
     // ── BEM PROGRAMS ──────────────────────────────────────────────────────────
-    // Mahasiswa: index, show (read only)
+    // Mahasiswa: index, show, rate, ratings (read only + evaluasi)
     // Admin    : store, update, destroy
-    Route::get('bem-programs',              [BemProgramController::class, 'index']);
-    Route::get('bem-programs/{bem_program}',[BemProgramController::class, 'show']);
+    Route::get('bem-programs',               [BemProgramController::class, 'index']);
+    Route::get('bem-programs/{bem_program}', [BemProgramController::class, 'show']);
+    Route::get('bem-programs/{bem_program}/ratings', [BemProgramController::class, 'ratings']);
+    Route::post('bem-programs/{bem_program}/rate',   [BemProgramController::class, 'rate']);
     Route::middleware('role:admin_bem,super_admin')->group(function () {
-        Route::post('bem-programs',                    [BemProgramController::class, 'store']);
-        Route::put('bem-programs/{bem_program}',       [BemProgramController::class, 'update']);
-        Route::patch('bem-programs/{bem_program}',     [BemProgramController::class, 'update']);
-        Route::delete('bem-programs/{bem_program}',    [BemProgramController::class, 'destroy']);
+        Route::post('bem-programs',                 [BemProgramController::class, 'store']);
+        Route::put('bem-programs/{bem_program}',    [BemProgramController::class, 'update']);
+        Route::patch('bem-programs/{bem_program}',  [BemProgramController::class, 'update']);
+        Route::delete('bem-programs/{bem_program}', [BemProgramController::class, 'destroy']);
     });
 
     // ── TRAININGS ─────────────────────────────────────────────────────────────
@@ -61,10 +64,13 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // ── PORTFOLIOS ────────────────────────────────────────────────────────────
-    // Semua user: index, show, like
+    // Semua user: index, show, like, comments
     // Pemilik  : store, update, destroy (dicek di controller)
     Route::apiResource('portfolios', PortfolioController::class);
-    Route::post('portfolios/{portfolio}/like', [PortfolioController::class, 'like']);
+    Route::post('portfolios/{portfolio}/like',                    [PortfolioController::class, 'like']);
+    Route::get('portfolios/{portfolio}/comments',                 [PortfolioController::class, 'comments']);
+    Route::post('portfolios/{portfolio}/comments',                [PortfolioController::class, 'addComment']);
+    Route::delete('portfolios/{portfolio}/comments/{comment}',    [PortfolioController::class, 'deleteComment']);
 
     // ── JOBS ──────────────────────────────────────────────────────────────────
     // Mahasiswa: index, show (read only)
@@ -97,4 +103,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('registrations/{registration}/status',
         [RegistrationController::class, 'updateStatus']
     )->middleware('role:admin_bem,super_admin');
+
+    // ── NOTIFICATIONS ─────────────────────────────────────────────────────────
+    Route::get('notifications',                          [NotificationController::class, 'index']);
+    Route::put('notifications/read-all',                 [NotificationController::class, 'markAllRead']);
+    Route::put('notifications/{notification}/read',      [NotificationController::class, 'markRead']);
+    Route::delete('notifications/{notification}',        [NotificationController::class, 'destroy']);
 });

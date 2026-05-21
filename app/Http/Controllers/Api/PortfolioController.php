@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Portfolio;
+use App\Models\PortfolioComment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -224,6 +225,70 @@ class PortfolioController extends Controller
                 'likes' => $portfolio->fresh()->likes,
                 'liked' => $liked,
             ],
+        ]);
+    }
+
+    /**
+     * GET /api/portfolios/{portfolio}/comments
+     * Ambil semua komentar pada portofolio.
+     */
+    public function comments(Portfolio $portfolio)
+    {
+        $comments = PortfolioComment::with('user:id,name,photo')
+            ->where('portfolio_id', $portfolio->id)
+            ->latest()
+            ->paginate(10);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Komentar berhasil diambil.',
+            'data'    => $comments,
+        ]);
+    }
+
+    /**
+     * POST /api/portfolios/{portfolio}/comments
+     * Tambah komentar pada portofolio.
+     */
+    public function addComment(Request $request, Portfolio $portfolio)
+    {
+        $request->validate([
+            'comment' => 'required|string|max:1000',
+        ]);
+
+        $comment = PortfolioComment::create([
+            'portfolio_id' => $portfolio->id,
+            'user_id'      => $request->user()->id,
+            'comment'      => $request->comment,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Komentar berhasil ditambahkan.',
+            'data'    => $comment->load('user:id,name,photo'),
+        ], 201);
+    }
+
+    /**
+     * DELETE /api/portfolios/{portfolio}/comments/{comment}
+     * Hapus komentar — hanya pemilik komentar atau admin.
+     */
+    public function deleteComment(Request $request, Portfolio $portfolio, PortfolioComment $comment)
+    {
+        $user = $request->user();
+
+        if (!in_array($user->role, ['admin_bem', 'super_admin']) && $comment->user_id !== $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses ditolak.',
+            ], 403);
+        }
+
+        $comment->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Komentar berhasil dihapus.',
         ]);
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Aspiration;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 
 class AspirationController extends Controller
@@ -178,6 +179,17 @@ class AspirationController extends Controller
             'status'      => $request->status,
             'admin_notes' => $request->admin_notes,
             'handled_by'  => $request->user()->id,
+        ]);
+
+        // Kirim notifikasi ke mahasiswa
+        $statusLabel = ['dikirim' => 'Dikirim', 'diproses' => 'Sedang Diproses', 'selesai' => 'Selesai'];
+        Notification::create([
+            'user_id'      => $aspiration->user_id,
+            'title'        => 'Status Aspirasi Diperbarui',
+            'message'      => "Aspirasi \"{$aspiration->title}\" kini berstatus: {$statusLabel[$request->status]}." . ($request->admin_notes ? " Catatan: {$request->admin_notes}" : ''),
+            'type'         => 'info',
+            'related_type' => 'aspiration',
+            'related_id'   => $aspiration->id,
         ]);
 
         return response()->json([

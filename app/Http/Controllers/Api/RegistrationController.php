@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Alumni;
+use App\Models\Notification;
 use App\Models\Registration;
 use App\Models\Training;
 use Illuminate\Http\Request;
@@ -226,6 +227,22 @@ class RegistrationController extends Controller
         $registration->update([
             'status'      => $request->status,
             'admin_notes' => $request->admin_notes,
+        ]);
+
+        // Kirim notifikasi ke mahasiswa
+        $typeLabel   = $registration->type === 'training' ? 'Pelatihan' : 'Mentoring';
+        $statusLabel = ['pending' => 'Menunggu', 'approved' => 'Disetujui', 'rejected' => 'Ditolak', 'completed' => 'Selesai'];
+        $subject     = $registration->type === 'training'
+            ? ($registration->training->title ?? 'Pelatihan')
+            : ($registration->alumni->name ?? 'Alumni');
+
+        Notification::create([
+            'user_id'      => $registration->user_id,
+            'title'        => "Pendaftaran {$typeLabel} {$statusLabel[$request->status]}",
+            'message'      => "Pendaftaran {$typeLabel} \"{$subject}\" Anda telah {$statusLabel[$request->status]}." . ($request->admin_notes ? " Catatan: {$request->admin_notes}" : ''),
+            'type'         => $request->status === 'approved' ? 'success' : ($request->status === 'rejected' ? 'warning' : 'info'),
+            'related_type' => 'registration',
+            'related_id'   => $registration->id,
         ]);
 
         return response()->json([

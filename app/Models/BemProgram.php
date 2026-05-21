@@ -31,4 +31,9 @@ class BemProgram extends Model
     {
         return $this->belongsTo(User::class, 'created_by');
     }
+
+    public function ratings()
+    {
+        return $this->hasMany(BemProgramRating::class);
+    }
 }

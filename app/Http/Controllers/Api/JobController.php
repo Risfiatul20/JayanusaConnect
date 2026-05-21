@@ -49,7 +49,7 @@ class JobController extends Controller
         $request->validate([
             'title'         => 'required|string|max:255',
             'company'       => 'required|string|max:255',
-            'type'          => 'required|in:kerja,magang',
+            'type'          => 'required|in:kerja,magang,beasiswa,kompetisi',
             'location'      => 'required|string|max:255',
             'description'   => 'required|string',
             'requirements'  => 'nullable|string',
@@ -112,7 +112,7 @@ class JobController extends Controller
         $request->validate([
             'title'         => 'sometimes|required|string|max:255',
             'company'       => 'sometimes|required|string|max:255',
-            'type'          => 'sometimes|required|in:kerja,magang',
+            'type'          => 'sometimes|required|in:kerja,magang,beasiswa,kompetisi',
             'location'      => 'sometimes|required|string|max:255',
             'description'   => 'sometimes|required|string',
             'requirements'  => 'nullable|string',

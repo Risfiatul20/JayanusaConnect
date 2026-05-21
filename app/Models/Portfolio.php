@@ -24,4 +24,9 @@ class Portfolio extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function comments()
+    {
+        return $this->hasMany(PortfolioComment::class);
+    }
 }
