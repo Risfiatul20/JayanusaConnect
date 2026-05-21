@@ -13,8 +13,9 @@ use App\Http\Controllers\Api\TrainingController;
 use Illuminate\Support\Facades\Route;
 
 // ─── PUBLIC ROUTES ────────────────────────────────────────────────────────────
-Route::post('/auth/register', [AuthController::class, 'register']);
-Route::post('/auth/login',    [AuthController::class, 'login']);
+Route::post('/auth/register',        [AuthController::class, 'register']);
+Route::post('/auth/register-alumni', [AuthController::class, 'registerAlumni']);
+Route::post('/auth/login',           [AuthController::class, 'login']);
 
 // ─── PROTECTED ROUTES (semua butuh token Sanctum) ─────────────────────────────
 Route::middleware('auth:sanctum')->group(function () {
