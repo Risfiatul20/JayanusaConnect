@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer' as developer;
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/constants/app_constants.dart';
@@ -16,7 +17,8 @@ class KampusAuthService {
         connectTimeout: const Duration(milliseconds: 15000),
         receiveTimeout: const Duration(milliseconds: 15000),
         headers: {
-          'Content-Type': 'application/json',
+          // PENTING: API kampus menerima form-data, bukan JSON
+          // Content-Type di-set per-request via FormData
           'Accept': 'application/json',
         },
       ),
@@ -32,15 +34,25 @@ class KampusAuthService {
     required String password,
   }) async {
     try {
+      developer.log(
+        'Attempting login: URL=${AppConstants.kampusApiUrl}${AppConstants.kampusLoginEndpoint}, NOBP=$nobp',
+        name: 'KampusAuth',
+      );
+
+      // PENTING: API kampus menerima multipart/form-data, bukan JSON
+      final formData = FormData.fromMap({
+        'username': nobp.trim(),
+        'password': password,
+      });
+
       final response = await _dio.post(
         AppConstants.kampusLoginEndpoint,
-        data: {
-          'username': nobp.trim(),
-          'password': password,
-        },
+        data: formData,
       );
 
       final data = response.data;
+      developer.log('Response status: ${response.statusCode}', name: 'KampusAuth');
+      developer.log('Response data: $data', name: 'KampusAuth');
 
       if (data['success'] == true) {
         final user = UserModel.fromKampusJson(data['data']);
@@ -66,7 +78,13 @@ class KampusAuthService {
             'Username atau Password salah, atau anda tidak terdaftar di semester ini.',
       };
     } on DioException catch (e) {
-      // Handle error spesifik dari API kampus
+      // Log detail error untuk debugging
+      developer.log('DioException type: ${e.type}', name: 'KampusAuth');
+      developer.log('DioException message: ${e.message}', name: 'KampusAuth');
+      developer.log('Response status: ${e.response?.statusCode}', name: 'KampusAuth');
+      developer.log('Response data: ${e.response?.data}', name: 'KampusAuth');
+      developer.log('Request URL: ${e.requestOptions.uri}', name: 'KampusAuth');
+
       if (e.type == DioExceptionType.connectionError) {
         return {
           'success': false,
@@ -95,9 +113,10 @@ class KampusAuthService {
         'message': 'Terjadi kesalahan. Silakan coba lagi.',
       };
     } catch (e) {
+      developer.log('Unknown error: $e', name: 'KampusAuth');
       return {
         'success': false,
-        'message': 'Terjadi kesalahan tidak terduga.',
+        'message': 'Terjadi kesalahan tidak terduga: $e',
       };
     }
   }
