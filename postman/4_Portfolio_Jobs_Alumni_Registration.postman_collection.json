@@ -2,13 +2,12 @@
   "info": {
     "_postman_id": "a1b2c3d4-0004-0004-0004-000000000004",
     "name": "JAYANUSA Connect - 4. Portfolio, Jobs, Alumni, Registration",
-    "description": "Endpoint Portfolio, Lowongan Kerja, Alumni, dan Registrasi Mentoring",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
     { "key": "base_url", "value": "http://localhost:8000", "type": "string" },
-    { "key": "token_mahasiswa", "value": "ISI_TOKEN_MAHASISWA_DISINI", "type": "string" },
-    { "key": "token_admin", "value": "ISI_TOKEN_ADMIN_DISINI", "type": "string" },
+    { "key": "token_mahasiswa", "value": "", "type": "string" },
+    { "key": "token_admin", "value": "", "type": "string" },
     { "key": "portfolio_id", "value": "1", "type": "string" },
     { "key": "job_id", "value": "1", "type": "string" },
     { "key": "alumni_id", "value": "1", "type": "string" },
@@ -16,133 +15,104 @@
   ],
   "item": [
     {
+      "name": "STEP 1 - Login Mahasiswa (Jalankan Dulu)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["var res = pm.response.json();", "if(res.success){ pm.collectionVariables.set(\"token_mahasiswa\", res.data.token); pm.test(\"Token mahasiswa tersimpan\", function(){ pm.expect(res.data.token).to.be.a(\"string\"); }); }"] } }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{base_url}}/api/auth/login", "host": ["{{base_url}}"], "path": ["api","auth","login"] },
+        "body": { "mode": "raw", "options": { "raw": { "language": "json" } }, "raw": "{\n  \"email\": \"budi@mahasiswa.jayanusa.ac.id\",\n  \"password\": \"password123\"\n}" }
+      },
+      "response": []
+    },
+    {
+      "name": "STEP 2 - Login Admin BEM (Jalankan Dulu)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["var res = pm.response.json();", "if(res.success){ pm.collectionVariables.set(\"token_admin\", res.data.token); pm.test(\"Token admin tersimpan\", function(){ pm.expect(res.data.token).to.be.a(\"string\"); }); }"] } }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{base_url}}/api/auth/login", "host": ["{{base_url}}"], "path": ["api","auth","login"] },
+        "body": { "mode": "raw", "options": { "raw": { "language": "json" } }, "raw": "{\n  \"email\": \"admin.bem@jayanusa.ac.id\",\n  \"password\": \"password123\"\n}" }
+      },
+      "response": []
+    },
+    {
       "name": "PORTFOLIOS",
       "item": [
         {
           "name": "List Portofolio (Semua)",
           "request": {
             "method": "GET",
-            "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }
-            ],
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }],
             "url": { "raw": "{{base_url}}/api/portfolios", "host": ["{{base_url}}"], "path": ["api","portfolios"] }
-          }
+          },
+          "response": []
         },
         {
-          "name": "List Portofolio Filter Angkatan",
+          "name": "List Portofolio Filter Angkatan+Category",
           "request": {
             "method": "GET",
-            "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/portfolios?angkatan=2021&category=Aplikasi",
-              "host": ["{{base_url}}"], "path": ["api","portfolios"],
-              "query": [
-                { "key": "angkatan", "value": "2021" },
-                { "key": "category", "value": "Aplikasi" }
-              ]
-            }
-          }
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }],
+            "url": { "raw": "{{base_url}}/api/portfolios?angkatan=2021&category=Aplikasi", "host": ["{{base_url}}"], "path": ["api","portfolios"], "query": [{ "key": "angkatan", "value": "2021" }, { "key": "category", "value": "Aplikasi" }] }
+          },
+          "response": []
         },
         {
           "name": "List Portofolio Milik Saya",
           "request": {
             "method": "GET",
-            "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/portfolios?my=1",
-              "host": ["{{base_url}}"], "path": ["api","portfolios"],
-              "query": [{ "key": "my", "value": "1" }]
-            }
-          }
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }],
+            "url": { "raw": "{{base_url}}/api/portfolios?my=1", "host": ["{{base_url}}"], "path": ["api","portfolios"], "query": [{ "key": "my", "value": "1" }] }
+          },
+          "response": []
         },
         {
-          "name": "Upload Portofolio Baru (tanpa file)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "var res = pm.response.json();",
-                  "if(res.success){ pm.collectionVariables.set('portfolio_id', res.data.id); }",
-                  "pm.test('Status 201', function(){ pm.response.to.have.status(201); });"
-                ]
-              }
-            }
-          ],
+          "name": "Upload Portofolio Baru (JSON)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["var res = pm.response.json();", "if(res.success){ pm.collectionVariables.set(\"portfolio_id\", String(res.data.id)); }", "pm.test(\"Status 201\", function(){ pm.response.to.have.status(201); });"] } }],
           "request": {
             "method": "POST",
-            "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }
-            ],
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }],
             "url": { "raw": "{{base_url}}/api/portfolios", "host": ["{{base_url}}"], "path": ["api","portfolios"] },
-            "body": {
-              "mode": "raw",
-              "options": { "raw": { "language": "json" } },
-              "raw": "{\n  \"title\": \"Aplikasi Absensi QR Code\",\n  \"category\": \"Aplikasi\",\n  \"description\": \"Aplikasi absensi menggunakan QR Code berbasis Flutter dan Laravel API.\",\n  \"github_url\": \"https://github.com/example/absensi-qr\",\n  \"demo_url\": \"https://absensi-demo.example.com\"\n}"
-            }
-          }
+            "body": { "mode": "raw", "options": { "raw": { "language": "json" } }, "raw": "{\n  \"title\": \"Aplikasi Absensi QR Code\",\n  \"category\": \"Aplikasi\",\n  \"description\": \"Aplikasi absensi menggunakan QR Code berbasis Flutter dan Laravel API.\",\n  \"github_url\": \"https://github.com/example/absensi-qr\",\n  \"demo_url\": \"https://absensi-demo.example.com\"\n}" }
+          },
+          "response": []
         },
         {
           "name": "Upload Portofolio + File (Form Data)",
           "request": {
             "method": "POST",
-            "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }
-            ],
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }],
             "url": { "raw": "{{base_url}}/api/portfolios", "host": ["{{base_url}}"], "path": ["api","portfolios"] },
-            "body": {
-              "mode": "formdata",
-              "formdata": [
-                { "key": "title", "value": "Skripsi Sistem Rekomendasi", "type": "text" },
-                { "key": "category", "value": "Skripsi", "type": "text" },
-                { "key": "description", "value": "Skripsi tentang sistem rekomendasi berbasis collaborative filtering.", "type": "text" },
-                { "key": "file", "src": [], "type": "file", "description": "Upload PDF/ZIP/DOC max 10MB" },
-                { "key": "thumbnail", "src": [], "type": "file", "description": "Upload JPG/PNG max 2MB" }
-              ]
-            }
-          }
+            "body": { "mode": "formdata", "formdata": [{ "key": "title", "value": "Skripsi Sistem Rekomendasi", "type": "text" }, { "key": "category", "value": "Skripsi", "type": "text" }, { "key": "description", "value": "Skripsi tentang sistem rekomendasi berbasis collaborative filtering.", "type": "text" }, { "key": "file", "src": [], "type": "file" }, { "key": "thumbnail", "src": [], "type": "file" }] }
+          },
+          "response": []
         },
         {
           "name": "Detail Portofolio (increment views)",
           "request": {
             "method": "GET",
-            "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }
-            ],
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }],
             "url": { "raw": "{{base_url}}/api/portfolios/{{portfolio_id}}", "host": ["{{base_url}}"], "path": ["api","portfolios","{{portfolio_id}}"] }
-          }
+          },
+          "response": []
         },
         {
           "name": "Like Portofolio (Toggle)",
           "request": {
             "method": "POST",
-            "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }
-            ],
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }],
             "url": { "raw": "{{base_url}}/api/portfolios/{{portfolio_id}}/like", "host": ["{{base_url}}"], "path": ["api","portfolios","{{portfolio_id}}","like"] }
-          }
+          },
+          "response": []
         },
         {
           "name": "Hapus Portofolio (Pemilik)",
           "request": {
             "method": "DELETE",
-            "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }
-            ],
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }],
             "url": { "raw": "{{base_url}}/api/portfolios/{{portfolio_id}}", "host": ["{{base_url}}"], "path": ["api","portfolios","{{portfolio_id}}"] }
-          }
+          },
+          "response": []
         }
       ]
     },
@@ -150,84 +120,62 @@
       "name": "JOBS",
       "item": [
         {
-          "name": "List Lowongan Kerja",
+          "name": "List Lowongan Kerja (Active)",
           "request": {
             "method": "GET",
-            "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }
-            ],
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }],
             "url": { "raw": "{{base_url}}/api/jobs", "host": ["{{base_url}}"], "path": ["api","jobs"] }
-          }
+          },
+          "response": []
         },
         {
           "name": "List Lowongan Filter Magang",
           "request": {
             "method": "GET",
-            "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/jobs?type=magang",
-              "host": ["{{base_url}}"], "path": ["api","jobs"],
-              "query": [{ "key": "type", "value": "magang" }]
-            }
-          }
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }],
+            "url": { "raw": "{{base_url}}/api/jobs?type=magang", "host": ["{{base_url}}"], "path": ["api","jobs"], "query": [{ "key": "type", "value": "magang" }] }
+          },
+          "response": []
         },
         {
           "name": "Detail Lowongan",
           "request": {
             "method": "GET",
-            "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }
-            ],
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }],
             "url": { "raw": "{{base_url}}/api/jobs/{{job_id}}", "host": ["{{base_url}}"], "path": ["api","jobs","{{job_id}}"] }
-          }
+          },
+          "response": []
         },
         {
           "name": "Tambah Lowongan (Admin)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "var res = pm.response.json();",
-                  "if(res.success){ pm.collectionVariables.set('job_id', res.data.id); }"
-                ]
-              }
-            }
-          ],
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["var res = pm.response.json();", "if(res.success){ pm.collectionVariables.set(\"job_id\", String(res.data.id)); }", "pm.test(\"Status 201\", function(){ pm.response.to.have.status(201); });"] } }],
           "request": {
             "method": "POST",
-            "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token_admin}}" }
-            ],
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token_admin}}" }],
             "url": { "raw": "{{base_url}}/api/jobs", "host": ["{{base_url}}"], "path": ["api","jobs"] },
-            "body": {
-              "mode": "raw",
-              "options": { "raw": { "language": "json" } },
-              "raw": "{\n  \"title\": \"Frontend Developer\",\n  \"company\": \"PT. Digital Riau\",\n  \"type\": \"kerja\",\n  \"location\": \"Pekanbaru, Riau\",\n  \"description\": \"Mencari frontend developer berpengalaman React/Vue.\",\n  \"requirements\": \"- Min 1 tahun pengalaman\\n- Menguasai React atau Vue\",\n  \"salary_range\": \"Rp 5.000.000 - Rp 8.000.000\",\n  \"deadline\": \"2024-12-31\",\n  \"contact_email\": \"hr@digitalriau.co.id\"\n}"
-            }
-          }
+            "body": { "mode": "raw", "options": { "raw": { "language": "json" } }, "raw": "{\n  \"title\": \"Frontend Developer\",\n  \"company\": \"PT. Digital Riau\",\n  \"type\": \"kerja\",\n  \"location\": \"Pekanbaru, Riau\",\n  \"description\": \"Mencari frontend developer berpengalaman React/Vue.\",\n  \"requirements\": \"- Min 1 tahun pengalaman\\n- Menguasai React atau Vue\",\n  \"salary_range\": \"Rp 5.000.000 - Rp 8.000.000\",\n  \"deadline\": \"2026-12-31\",\n  \"contact_email\": \"hr@digitalriau.co.id\"\n}" }
+          },
+          "response": []
         },
         {
           "name": "Tutup Lowongan (Admin)",
           "request": {
             "method": "PUT",
-            "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token_admin}}" }
-            ],
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token_admin}}" }],
             "url": { "raw": "{{base_url}}/api/jobs/{{job_id}}", "host": ["{{base_url}}"], "path": ["api","jobs","{{job_id}}"] },
-            "body": {
-              "mode": "raw",
-              "options": { "raw": { "language": "json" } },
-              "raw": "{\n  \"status\": \"closed\"\n}"
-            }
-          }
+            "body": { "mode": "raw", "options": { "raw": { "language": "json" } }, "raw": "{\n  \"status\": \"closed\"\n}" }
+          },
+          "response": []
+        },
+        {
+          "name": "[TEST] Tambah Lowongan sbg Mahasiswa - Harus 403",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }],
+            "url": { "raw": "{{base_url}}/api/jobs", "host": ["{{base_url}}"], "path": ["api","jobs"] },
+            "body": { "mode": "raw", "options": { "raw": { "language": "json" } }, "raw": "{\n  \"title\": \"Test\",\n  \"company\": \"Test\",\n  \"type\": \"kerja\",\n  \"location\": \"Test\",\n  \"description\": \"Test\"\n}" }
+          },
+          "response": []
         }
       ]
     },
@@ -238,65 +186,49 @@
           "name": "List Alumni",
           "request": {
             "method": "GET",
-            "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }
-            ],
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }],
             "url": { "raw": "{{base_url}}/api/alumni", "host": ["{{base_url}}"], "path": ["api","alumni"] }
-          }
+          },
+          "response": []
         },
         {
           "name": "List Alumni Tersedia Mentoring",
           "request": {
             "method": "GET",
-            "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/alumni?mentoring=1",
-              "host": ["{{base_url}}"], "path": ["api","alumni"],
-              "query": [{ "key": "mentoring", "value": "1" }]
-            }
-          }
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }],
+            "url": { "raw": "{{base_url}}/api/alumni?mentoring=1", "host": ["{{base_url}}"], "path": ["api","alumni"], "query": [{ "key": "mentoring", "value": "1" }] }
+          },
+          "response": []
         },
         {
           "name": "Detail Alumni",
           "request": {
             "method": "GET",
-            "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }
-            ],
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }],
             "url": { "raw": "{{base_url}}/api/alumni/{{alumni_id}}", "host": ["{{base_url}}"], "path": ["api","alumni","{{alumni_id}}"] }
-          }
+          },
+          "response": []
         },
         {
           "name": "Tambah Alumni (Admin)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "var res = pm.response.json();",
-                  "if(res.success){ pm.collectionVariables.set('alumni_id', res.data.id); }"
-                ]
-              }
-            }
-          ],
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["var res = pm.response.json();", "if(res.success){ pm.collectionVariables.set(\"alumni_id\", String(res.data.id)); }", "pm.test(\"Status 201\", function(){ pm.response.to.have.status(201); });"] } }],
           "request": {
             "method": "POST",
-            "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token_admin}}" }
-            ],
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token_admin}}" }],
             "url": { "raw": "{{base_url}}/api/alumni", "host": ["{{base_url}}"], "path": ["api","alumni"] },
-            "body": {
-              "mode": "raw",
-              "options": { "raw": { "language": "json" } },
-              "raw": "{\n  \"name\": \"Alumni Test\",\n  \"angkatan\": \"2017\",\n  \"prodi\": \"Sistem Informasi\",\n  \"profession\": \"Full Stack Developer\",\n  \"company\": \"PT. Startup Indonesia\",\n  \"position\": \"Senior Developer\",\n  \"email\": \"alumni.test@gmail.com\",\n  \"bio\": \"Alumni JAYANUSA angkatan 2017, kini bekerja sebagai Full Stack Developer.\",\n  \"available_for_mentoring\": true\n}"
-            }
-          }
+            "body": { "mode": "raw", "options": { "raw": { "language": "json" } }, "raw": "{\n  \"name\": \"Alumni Test\",\n  \"angkatan\": \"2017\",\n  \"prodi\": \"Sistem Informasi\",\n  \"profession\": \"Full Stack Developer\",\n  \"company\": \"PT. Startup Indonesia\",\n  \"position\": \"Senior Developer\",\n  \"email\": \"alumni.test@gmail.com\",\n  \"bio\": \"Alumni JAYANUSA angkatan 2017.\",\n  \"available_for_mentoring\": true\n}" }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Alumni (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token_admin}}" }],
+            "url": { "raw": "{{base_url}}/api/alumni/{{alumni_id}}", "host": ["{{base_url}}"], "path": ["api","alumni","{{alumni_id}}"] },
+            "body": { "mode": "raw", "options": { "raw": { "language": "json" } }, "raw": "{\n  \"available_for_mentoring\": false\n}" }
+          },
+          "response": []
         }
       ]
     },
@@ -307,113 +239,68 @@
           "name": "List Registrasi Saya (Mahasiswa)",
           "request": {
             "method": "GET",
-            "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }
-            ],
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }],
             "url": { "raw": "{{base_url}}/api/registrations", "host": ["{{base_url}}"], "path": ["api","registrations"] }
-          }
+          },
+          "response": []
         },
         {
           "name": "List SEMUA Registrasi (Admin)",
           "request": {
             "method": "GET",
-            "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token_admin}}" }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/registrations?type=training&status=pending",
-              "host": ["{{base_url}}"], "path": ["api","registrations"],
-              "query": [
-                { "key": "type", "value": "training" },
-                { "key": "status", "value": "pending" }
-              ]
-            }
-          }
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token_admin}}" }],
+            "url": { "raw": "{{base_url}}/api/registrations?type=training&status=pending", "host": ["{{base_url}}"], "path": ["api","registrations"], "query": [{ "key": "type", "value": "training" }, { "key": "status", "value": "pending" }] }
+          },
+          "response": []
         },
         {
           "name": "Daftar Mentoring Alumni - TRANSAKSI",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "var res = pm.response.json();",
-                  "if(res.success){ pm.collectionVariables.set('registration_id', res.data.id); }",
-                  "pm.test('Status 201', function(){ pm.response.to.have.status(201); });"
-                ]
-              }
-            }
-          ],
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["var res = pm.response.json();", "if(res.success){ pm.collectionVariables.set(\"registration_id\", String(res.data.id)); }", "pm.test(\"Status 201\", function(){ pm.response.to.have.status(201); });"] } }],
           "request": {
             "method": "POST",
-            "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }
-            ],
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }],
             "url": { "raw": "{{base_url}}/api/registrations", "host": ["{{base_url}}"], "path": ["api","registrations"] },
-            "body": {
-              "mode": "raw",
-              "options": { "raw": { "language": "json" } },
-              "raw": "{\n  \"alumni_id\": 2,\n  \"message\": \"Saya ingin belajar UI/UX design dari Kak Putri yang sudah berpengalaman di Tokopedia.\"\n}"
-            }
-          }
+            "body": { "mode": "raw", "options": { "raw": { "language": "json" } }, "raw": "{\n  \"alumni_id\": 2,\n  \"message\": \"Saya ingin belajar UI/UX design dari Kak Putri yang sudah berpengalaman di Tokopedia.\"\n}" }
+          },
+          "response": []
         },
         {
           "name": "Detail Registrasi",
           "request": {
             "method": "GET",
-            "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }
-            ],
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }],
             "url": { "raw": "{{base_url}}/api/registrations/{{registration_id}}", "host": ["{{base_url}}"], "path": ["api","registrations","{{registration_id}}"] }
-          }
+          },
+          "response": []
         },
         {
           "name": "Approve Registrasi (Admin) - TRANSAKSI",
           "request": {
             "method": "PUT",
-            "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token_admin}}" }
-            ],
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token_admin}}" }],
             "url": { "raw": "{{base_url}}/api/registrations/{{registration_id}}/status", "host": ["{{base_url}}"], "path": ["api","registrations","{{registration_id}}","status"] },
-            "body": {
-              "mode": "raw",
-              "options": { "raw": { "language": "json" } },
-              "raw": "{\n  \"status\": \"approved\",\n  \"admin_notes\": \"Pendaftaran mentoring disetujui. Silakan hubungi alumni melalui email.\"\n}"
-            }
-          }
+            "body": { "mode": "raw", "options": { "raw": { "language": "json" } }, "raw": "{\n  \"status\": \"approved\",\n  \"admin_notes\": \"Pendaftaran mentoring disetujui. Silakan hubungi alumni melalui email.\"\n}" }
+          },
+          "response": []
         },
         {
-          "name": "Upload Sertifikat Training (Mahasiswa)",
+          "name": "Upload Sertifikat Training (Form Data)",
           "request": {
             "method": "PUT",
-            "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }
-            ],
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }],
             "url": { "raw": "{{base_url}}/api/registrations/{{registration_id}}", "host": ["{{base_url}}"], "path": ["api","registrations","{{registration_id}}"] },
-            "body": {
-              "mode": "formdata",
-              "formdata": [
-                { "key": "certificate", "src": [], "type": "file", "description": "Upload sertifikat PDF/JPG/PNG max 5MB" }
-              ]
-            }
-          }
+            "body": { "mode": "formdata", "formdata": [{ "key": "certificate", "src": [], "type": "file" }] }
+          },
+          "response": []
         },
         {
           "name": "Batalkan Registrasi (Mahasiswa - pending)",
           "request": {
             "method": "DELETE",
-            "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }
-            ],
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token_mahasiswa}}" }],
             "url": { "raw": "{{base_url}}/api/registrations/{{registration_id}}", "host": ["{{base_url}}"], "path": ["api","registrations","{{registration_id}}"] }
-          }
+          },
+          "response": []
         }
       ]
     }
