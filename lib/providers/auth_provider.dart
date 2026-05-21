@@ -80,6 +80,43 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  /// Register akun baru via backend Laravel (khusus admin BEM)
+  Future<Map<String, dynamic>> register({
+    required String name,
+    required String email,
+    required String password,
+    required String passwordConfirmation,
+    String? nim,
+    String? phone,
+    String? angkatan,
+    String? prodi,
+  }) async {
+    _status = AuthStatus.loading;
+    _errorMessage = null;
+    notifyListeners();
+
+    final result = await _authService.register(
+      name: name,
+      email: email,
+      password: password,
+      passwordConfirmation: passwordConfirmation,
+      nim: nim,
+      phone: phone,
+      angkatan: angkatan,
+      prodi: prodi,
+    );
+
+    if (result['success'] == true) {
+      _user = result['user'] as UserModel;
+      _status = AuthStatus.authenticated;
+    } else {
+      _errorMessage = result['message'];
+      _status = AuthStatus.unauthenticated;
+    }
+    notifyListeners();
+    return result;
+  }
+
   /// Logout — handle kedua jenis login
   Future<void> logout() async {
     _status = AuthStatus.loading;
