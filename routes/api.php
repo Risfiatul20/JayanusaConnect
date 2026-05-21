@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BemProgramController;
 use App\Http\Controllers\Api\JobController;
 use App\Http\Controllers\Api\PortfolioController;
+use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\RegistrationController;
 use App\Http\Controllers\Api\TrainingController;
 use Illuminate\Support\Facades\Route;
@@ -20,6 +21,11 @@ Route::middleware('auth:sanctum')->group(function () {
     // Auth
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::get('/auth/me',      [AuthController::class, 'me']);
+
+    // ── PROFILE ───────────────────────────────────────────────────────────────
+    Route::get('profile',                  [ProfileController::class, 'show']);
+    Route::post('profile',                 [ProfileController::class, 'update']);
+    Route::put('profile/password',         [ProfileController::class, 'updatePassword']);
 
     // ── ASPIRASI ──────────────────────────────────────────────────────────────
     // Mahasiswa: index (milik sendiri), store, show, update, destroy
