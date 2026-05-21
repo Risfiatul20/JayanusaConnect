@@ -1,0 +1,51 @@
+name: jayanusa_connect
+description: "Platform Digital BEM Kampus JAYANUSA"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.5
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+
+  # HTTP Client
+  dio: ^5.8.0+1
+
+  # State Management
+  provider: ^6.1.5
+
+  # Local Storage
+  shared_preferences: ^2.5.3
+
+  # Image
+  image_picker: ^1.1.2
+  cached_network_image: ^3.4.1
+
+  # UI
+  flutter_svg: ^2.0.17
+  shimmer: ^3.0.0
+  fluttertoast: ^8.2.12
+  badges: ^3.1.2
+
+  # Utils
+  intl: ^0.20.2
+  url_launcher: ^6.3.1
+  file_picker: ^10.1.9
+  path_provider: ^2.1.5
+  connectivity_plus: ^6.1.4
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/icons/
+    - assets/lottie/
