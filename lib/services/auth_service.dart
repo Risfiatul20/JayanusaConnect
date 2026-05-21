@@ -134,6 +134,26 @@ class AuthService {
     }
   }
 
+  // Check verification status
+  Future<Map<String, dynamic>> checkVerification() async {
+    try {
+      final response = await _dio.get('/auth/check-verification');
+      return response.data;
+    } on DioException catch (e) {
+      return {'is_verified': false, 'message': handleDioError(e)};
+    }
+  }
+
+  // Resend OTP
+  Future<Map<String, dynamic>> resendOtp() async {
+    try {
+      final response = await _dio.post('/auth/resend-otp');
+      return response.data;
+    } on DioException catch (e) {
+      return {'success': false, 'message': handleDioError(e)};
+    }
+  }
+
   // Logout
   Future<bool> logout() async {
     try {

@@ -185,4 +185,42 @@ class AuthProvider extends ChangeNotifier {
     _user = user;
     notifyListeners();
   }
+
+  /// Cek apakah akun sudah diverifikasi admin (polling)
+  Future<bool> checkVerification() async {
+    try {
+      final result = await _authService.checkVerification();
+      if (result['is_verified'] == true) {
+        // Update user lokal
+        if (_user != null) {
+          _user = UserModel(
+            id: _user!.id,
+            name: _user!.name,
+            nim: _user!.nim,
+            nobp: _user!.nobp,
+            email: _user!.email,
+            role: _user!.role,
+            photo: _user!.photo,
+            phone: _user!.phone,
+            address: _user!.address,
+            angkatan: _user!.angkatan,
+            prodi: _user!.prodi,
+            createdAt: _user!.createdAt,
+            isKampusLogin: _user!.isKampusLogin,
+            isVerified: true,
+          );
+          notifyListeners();
+        }
+        return true;
+      }
+      return false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Resend OTP — generate kode baru
+  Future<Map<String, dynamic>> resendOtp() async {
+    return await _authService.resendOtp();
+  }
 }

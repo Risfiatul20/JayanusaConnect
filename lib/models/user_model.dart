@@ -14,6 +14,7 @@ class UserModel {
 
   // Flag untuk tahu user login via sistem kampus atau backend kita
   final bool isKampusLogin;
+  final bool isVerified;
 
   UserModel({
     this.id,
@@ -29,6 +30,7 @@ class UserModel {
     this.prodi,
     this.createdAt,
     this.isKampusLogin = false,
+    this.isVerified = true,
   });
 
   /// Dari response backend Laravel kita
@@ -47,6 +49,7 @@ class UserModel {
       prodi: json['prodi'],
       createdAt: json['created_at'],
       isKampusLogin: false,
+      isVerified: json['is_verified'] ?? true,
     );
   }
 
@@ -80,6 +83,7 @@ class UserModel {
       'prodi': prodi,
       'created_at': createdAt,
       'is_kampus_login': isKampusLogin,
+      'is_verified': isVerified,
     };
   }
 

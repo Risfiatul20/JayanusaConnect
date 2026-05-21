@@ -4,6 +4,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/constants/app_constants.dart';
 import '../../providers/auth_provider.dart';
 import '../home/home_screen.dart';
+import 'otp_verification_screen.dart';
 
 /// Login Screen — JAYANUSA Neon-Glass Design
 /// Tab Masuk  : NOBP → mahasiswa | email → admin/alumni
@@ -182,7 +183,22 @@ class _LoginScreenState extends State<LoginScreen>
 
     if (!mounted) return;
     if (result['success'] == true) {
-      _goHome();
+      // Alumni perlu verifikasi OTP via WA dulu
+      Navigator.pushReplacement(
+        context,
+        PageRouteBuilder(
+          pageBuilder: (_, __, ___) => OtpVerificationScreen(
+            otpCode:   result['data']['otp_code'],
+            waLink:    result['data']['wa_link'],
+            userName:  _nameCtrl.text.trim(),
+            phone:     _phoneCtrl.text.trim(),
+            expiresAt: result['data']['expires_at'],
+          ),
+          transitionsBuilder: (_, anim, __, child) =>
+              FadeTransition(opacity: anim, child: child),
+          transitionDuration: const Duration(milliseconds: 350),
+        ),
+      );
     } else {
       _showSnack(result['message'] ?? 'Registrasi gagal.');
     }
