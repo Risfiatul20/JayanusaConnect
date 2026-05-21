@@ -117,6 +117,53 @@ class AuthProvider extends ChangeNotifier {
     return result;
   }
 
+  /// Register Alumni — buat akun user + data alumni sekaligus
+  Future<Map<String, dynamic>> registerAlumni({
+    required String name,
+    required String email,
+    required String password,
+    required String passwordConfirmation,
+    required String angkatan,
+    String? nim,
+    String? phone,
+    String? prodi,
+    String? profession,
+    String? company,
+    String? position,
+    String? linkedin,
+    String? bio,
+  }) async {
+    _status = AuthStatus.loading;
+    _errorMessage = null;
+    notifyListeners();
+
+    final result = await _authService.registerAlumni(
+      name: name,
+      email: email,
+      password: password,
+      passwordConfirmation: passwordConfirmation,
+      angkatan: angkatan,
+      nim: nim,
+      phone: phone,
+      prodi: prodi,
+      profession: profession,
+      company: company,
+      position: position,
+      linkedin: linkedin,
+      bio: bio,
+    );
+
+    if (result['success'] == true) {
+      _user = result['user'] as UserModel;
+      _status = AuthStatus.authenticated;
+    } else {
+      _errorMessage = result['message'];
+      _status = AuthStatus.unauthenticated;
+    }
+    notifyListeners();
+    return result;
+  }
+
   /// Logout — handle kedua jenis login
   Future<void> logout() async {
     _status = AuthStatus.loading;

@@ -79,6 +79,61 @@ class AuthService {
     }
   }
 
+  // Register Alumni — buat akun + data alumni sekaligus
+  Future<Map<String, dynamic>> registerAlumni({
+    required String name,
+    required String email,
+    required String password,
+    required String passwordConfirmation,
+    required String angkatan,
+    String? nim,
+    String? phone,
+    String? prodi,
+    String? profession,
+    String? company,
+    String? position,
+    String? linkedin,
+    String? bio,
+  }) async {
+    try {
+      final response = await _dio.post('/auth/register-alumni', data: {
+        'name': name,
+        'email': email,
+        'password': password,
+        'password_confirmation': passwordConfirmation,
+        'angkatan': angkatan,
+        if (nim != null) 'nim': nim,
+        if (phone != null) 'phone': phone,
+        if (prodi != null) 'prodi': prodi,
+        if (profession != null) 'profession': profession,
+        if (company != null) 'company': company,
+        if (position != null) 'position': position,
+        if (linkedin != null) 'linkedin': linkedin,
+        if (bio != null) 'bio': bio,
+      });
+
+      final data = response.data;
+      if (data['success'] == true) {
+        final token = data['data']['token'];
+        final user = UserModel.fromJson(data['data']['user']);
+
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(AppConstants.tokenKey, token);
+        await prefs.setString(AppConstants.userKey, jsonEncode(user.toJson()));
+
+        return {'success': true, 'user': user, 'token': token};
+      }
+      return {'success': false, 'message': data['message']};
+    } on DioException catch (e) {
+      final errors = e.response?.data?['errors'];
+      return {
+        'success': false,
+        'message': handleDioError(e),
+        'errors': errors,
+      };
+    }
+  }
+
   // Logout
   Future<bool> logout() async {
     try {

@@ -86,18 +86,14 @@ class UserModel {
   bool get isAdmin => role == 'admin_bem' || role == 'super_admin';
   bool get isSuperAdmin => role == 'super_admin';
   bool get isMahasiswa => role == 'mahasiswa';
-
-  /// Identifier utama user — NOBP jika dari kampus, NIM jika dari backend kita
-  String get identifier => nobp ?? nim ?? '';
+  bool get isAlumni => role == 'alumni';
 
   String get displayRole {
     switch (role) {
-      case 'admin_bem':
-        return 'Admin BEM';
-      case 'super_admin':
-        return 'Super Admin';
-      default:
-        return 'Mahasiswa';
+      case 'admin_bem':   return 'Admin BEM';
+      case 'super_admin': return 'Super Admin';
+      case 'alumni':      return 'Alumni';
+      default:            return 'Mahasiswa';
     }
   }
 }
