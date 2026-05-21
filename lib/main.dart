@@ -19,7 +19,9 @@ void main() async {
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
+      statusBarIconBrightness: Brightness.light,
+      systemNavigationBarColor: Color(0xFF0D0D1B),
+      systemNavigationBarIconBrightness: Brightness.light,
     ),
   );
 
@@ -41,7 +43,7 @@ class JayanusaConnectApp extends StatelessWidget {
       child: MaterialApp(
         title: 'JAYANUSA Connect',
         debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
+        theme: AppTheme.darkTheme,
         home: const SplashScreen(),
       ),
     );

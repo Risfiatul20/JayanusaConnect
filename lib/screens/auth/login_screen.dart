@@ -5,6 +5,10 @@ import '../../core/constants/app_constants.dart';
 import '../../providers/auth_provider.dart';
 import '../home/home_screen.dart';
 
+/// Login Screen — JAYANUSA Neon-Glass Design
+/// Satu form untuk semua role: Mahasiswa (NOBP), Admin BEM (email), Alumni (email)
+/// Logic: jika identifier berisi '@' → login via backend Laravel
+///        jika identifier angka saja → login via API kampus (NOBP)
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -14,19 +18,13 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen>
     with SingleTickerProviderStateMixin {
+  final _formKey = GlobalKey<FormState>();
+  final _identifierController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _obscurePassword = true;
+
+  // Tab: 0 = Masuk, 1 = Info
   late TabController _tabController;
-
-  // Form Mahasiswa (NOBP)
-  final _mahasiswaFormKey = GlobalKey<FormState>();
-  final _nobpController = TextEditingController();
-  final _nobpPasswordController = TextEditingController();
-  bool _obscureNobpPassword = true;
-
-  // Form Admin (Email)
-  final _adminFormKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
-  final _adminPasswordController = TextEditingController();
-  bool _obscureAdminPassword = true;
 
   @override
   void initState() {
@@ -37,54 +35,44 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   void dispose() {
     _tabController.dispose();
-    _nobpController.dispose();
-    _nobpPasswordController.dispose();
-    _emailController.dispose();
-    _adminPasswordController.dispose();
+    _identifierController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
-  /// Login mahasiswa via API kampus menggunakan NOBP
-  Future<void> _loginMahasiswa() async {
-    if (!_mahasiswaFormKey.currentState!.validate()) return;
+  /// Deteksi otomatis jenis login berdasarkan identifier
+  bool get _isEmailLogin => _identifierController.text.trim().contains('@');
 
+  Future<void> _login() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final identifier = _identifierController.text.trim();
+    final password = _passwordController.text;
     final authProvider = context.read<AuthProvider>();
-    final success = await authProvider.loginWithNobp(
-      _nobpController.text.trim(),
-      _nobpPasswordController.text,
-    );
+    bool success;
 
-    if (!mounted) return;
-
-    if (success) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
-      );
+    if (_isEmailLogin) {
+      // Admin BEM / Super Admin / Alumni → backend Laravel
+      success = await authProvider.loginAdmin(identifier, password);
     } else {
-      _showError(authProvider.errorMessage ?? 'Login gagal');
+      // Mahasiswa → API kampus via NOBP
+      success = await authProvider.loginWithNobp(identifier, password);
     }
-  }
-
-  /// Login admin via backend Laravel kita
-  Future<void> _loginAdmin() async {
-    if (!_adminFormKey.currentState!.validate()) return;
-
-    final authProvider = context.read<AuthProvider>();
-    final success = await authProvider.loginAdmin(
-      _emailController.text.trim(),
-      _adminPasswordController.text,
-    );
 
     if (!mounted) return;
 
     if (success) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
+        PageRouteBuilder(
+          pageBuilder: (_, __, ___) => const HomeScreen(),
+          transitionsBuilder: (_, animation, __, child) =>
+              FadeTransition(opacity: animation, child: child),
+          transitionDuration: const Duration(milliseconds: 400),
+        ),
       );
     } else {
-      _showError(authProvider.errorMessage ?? 'Login gagal');
+      _showError(authProvider.errorMessage ?? 'Login gagal. Periksa kembali data Anda.');
     }
   }
 
@@ -93,15 +81,25 @@ class _LoginScreenState extends State<LoginScreen>
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.error_outline, color: Colors.white, size: 20),
-            const SizedBox(width: 8),
-            Expanded(child: Text(message)),
+            const Icon(Icons.error_outline_rounded, color: Colors.white, size: 18),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
           ],
         ),
-        backgroundColor: AppColors.error,
+        backgroundColor: AppColors.errorContainer,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         margin: const EdgeInsets.all(16),
+        duration: const Duration(seconds: 4),
       ),
     );
   }
@@ -110,149 +108,160 @@ class _LoginScreenState extends State<LoginScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
+      body: Stack(
+        children: [
+          // ── Ambient background glow ──────────────────────────────────────
+          Positioned(
+            top: -100,
+            left: -100,
+            child: Container(
+              width: 400,
+              height: 400,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    const Color(0xFF3B2FC9).withValues(alpha: 0.25),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: -80,
+            right: -80,
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    AppColors.tertiaryAlt.withValues(alpha: 0.12),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // ── Main content ─────────────────────────────────────────────────
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                children: [
+                  const SizedBox(height: 48),
+
+                  // ── Brand Header ─────────────────────────────────────────
+                  _buildBrandHeader(),
+
+                  const SizedBox(height: 36),
+
+                  // ── Glass Card ───────────────────────────────────────────
+                  _buildGlassCard(),
+
+                  const SizedBox(height: 24),
+
+                  // ── Info hint ────────────────────────────────────────────
+                  _buildInfoHint(),
+
+                  const SizedBox(height: 40),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBrandHeader() {
+    return Column(
+      children: [
+        // Logo glass container
+        Container(
+          width: 80,
+          height: 80,
+          decoration: BoxDecoration(
+            color: AppColors.glassSurface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppColors.glassBorder, width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.2),
+                blurRadius: 24,
+                spreadRadius: 0,
+              ),
+            ],
+          ),
+          child: const Icon(
+            Icons.school_rounded,
+            size: 40,
+            color: AppColors.primary,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          AppConstants.appName,
+          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.02,
+              ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Pusat Digital Aspirasi & Karir Mahasiswa',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AppColors.onSurfaceVariant,
+                fontSize: 13,
+              ),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGlassCard() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.glassSurface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.glassBorder, width: 1),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 40),
+              // ── Tab header ─────────────────────────────────────────────
+              _buildTabHeader(),
 
-              // ── Logo & Header ──────────────────────────────────────────────
-              Container(
-                width: 84,
-                height: 84,
-                decoration: BoxDecoration(
-                  gradient: AppColors.primaryGradient,
-                  borderRadius: BorderRadius.circular(22),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.35),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.school_rounded,
-                  size: 46,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                AppConstants.appName,
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                AppConstants.appTagline,
-                style: Theme.of(context).textTheme.bodySmall,
-                textAlign: TextAlign.center,
-              ),
+              const SizedBox(height: 24),
 
-              const SizedBox(height: 32),
-
-              // ── Tab Selector ───────────────────────────────────────────────
-              Container(
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceVariant,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                padding: const EdgeInsets.all(4),
-                child: TabBar(
-                  controller: _tabController,
-                  indicator: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.08),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  indicatorSize: TabBarIndicatorSize.tab,
-                  dividerColor: Colors.transparent,
-                  labelColor: AppColors.primary,
-                  unselectedLabelColor: AppColors.textSecondary,
-                  labelStyle: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  unselectedLabelStyle: const TextStyle(fontSize: 13),
-                  tabs: const [
-                    Tab(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.person_outline, size: 16),
-                          SizedBox(width: 6),
-                          Text('Mahasiswa'),
-                        ],
-                      ),
-                    ),
-                    Tab(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.admin_panel_settings_outlined, size: 16),
-                          SizedBox(width: 6),
-                          Text('Admin BEM'),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 28),
-
-              // ── Tab Content ────────────────────────────────────────────────
-              SizedBox(
-                height: 320,
-                child: TabBarView(
-                  controller: _tabController,
+              // ── Form ───────────────────────────────────────────────────
+              Form(
+                key: _formKey,
+                child: Column(
                   children: [
-                    _buildMahasiswaForm(),
-                    _buildAdminForm(),
+                    // Identifier field
+                    _buildIdentifierField(),
+
+                    const SizedBox(height: 16),
+
+                    // Password field
+                    _buildPasswordField(),
+
+                    const SizedBox(height: 28),
+
+                    // Login button
+                    _buildLoginButton(),
                   ],
                 ),
               ),
-
-              const SizedBox(height: 16),
-
-              // ── Info API Kampus ────────────────────────────────────────────
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                decoration: BoxDecoration(
-                  color: AppColors.info.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: AppColors.info.withValues(alpha: 0.2),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.info_outline, color: AppColors.info, size: 18),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Mahasiswa login menggunakan NOBP dan password SIAKAD kampus.',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.info,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 32),
             ],
           ),
         ),
@@ -260,172 +269,265 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  /// Form login mahasiswa dengan NOBP
-  Widget _buildMahasiswaForm() {
-    return Form(
-      key: _mahasiswaFormKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Login Mahasiswa',
-            style: Theme.of(context).textTheme.headlineSmall,
+  Widget _buildTabHeader() {
+    return Row(
+      children: [
+        Expanded(
+          child: _TabItem(
+            label: 'Masuk',
+            isActive: true,
+            onTap: () {},
           ),
-          const SizedBox(height: 4),
-          Text(
-            'Gunakan NOBP dan password SIAKAD Anda',
-            style: Theme.of(context).textTheme.bodySmall,
+        ),
+        Expanded(
+          child: _TabItem(
+            label: 'Tentang',
+            isActive: false,
+            onTap: () {},
           ),
-          const SizedBox(height: 20),
+        ),
+      ],
+    );
+  }
 
-          // NOBP Field
-          TextFormField(
-            controller: _nobpController,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(
-              labelText: 'NOBP',
-              hintText: 'Contoh: 2010031',
-              prefixIcon: Icon(Icons.badge_outlined),
-            ),
-            validator: (v) {
-              if (v == null || v.trim().isEmpty) return 'NOBP wajib diisi';
-              if (v.trim().length < 5) return 'NOBP tidak valid';
-              return null;
-            },
+  Widget _buildIdentifierField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextFormField(
+          controller: _identifierController,
+          keyboardType: TextInputType.emailAddress,
+          style: const TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            fontSize: 14,
+            color: AppColors.onSurface,
           ),
-          const SizedBox(height: 14),
-
-          // Password Field
-          TextFormField(
-            controller: _nobpPasswordController,
-            obscureText: _obscureNobpPassword,
-            decoration: InputDecoration(
-              labelText: 'Password SIAKAD',
-              hintText: 'Masukkan password',
-              prefixIcon: const Icon(Icons.lock_outline),
-              suffixIcon: IconButton(
-                icon: Icon(
-                  _obscureNobpPassword
-                      ? Icons.visibility_outlined
-                      : Icons.visibility_off_outlined,
-                ),
-                onPressed: () => setState(
-                    () => _obscureNobpPassword = !_obscureNobpPassword),
+          onChanged: (_) => setState(() {}), // rebuild untuk update hint
+          decoration: InputDecoration(
+            hintText: 'Email atau NOBP',
+            prefixIcon: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: Icon(
+                _isEmailLogin ? Icons.email_outlined : Icons.badge_outlined,
+                key: ValueKey(_isEmailLogin),
+                color: AppColors.onSurfaceVariant,
+                size: 20,
               ),
             ),
-            validator: (v) {
-              if (v == null || v.isEmpty) return 'Password wajib diisi';
-              return null;
-            },
+            // Suffix chip menunjukkan mode login
+            suffixIcon: _identifierController.text.isNotEmpty
+                ? Container(
+                    margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: _isEmailLogin
+                          ? AppColors.secondaryContainer.withValues(alpha: 0.4)
+                          : AppColors.tertiaryContainer.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: _isEmailLogin
+                            ? AppColors.secondary.withValues(alpha: 0.4)
+                            : AppColors.tertiaryAlt.withValues(alpha: 0.4),
+                        width: 1,
+                      ),
+                    ),
+                    child: Text(
+                      _isEmailLogin ? 'Admin' : 'Mahasiswa',
+                      style: TextStyle(
+                        fontFamily: 'PlusJakartaSans',
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.05,
+                        color: _isEmailLogin
+                            ? AppColors.secondary
+                            : AppColors.tertiaryAlt,
+                      ),
+                    ),
+                  )
+                : null,
           ),
-          const SizedBox(height: 24),
+          validator: (v) {
+            if (v == null || v.trim().isEmpty) {
+              return 'Email atau NOBP wajib diisi';
+            }
+            if (!v.contains('@') && v.trim().length < 5) {
+              return 'NOBP minimal 5 karakter';
+            }
+            if (v.contains('@') && !RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(v)) {
+              return 'Format email tidak valid';
+            }
+            return null;
+          },
+        ),
+      ],
+    );
+  }
 
-          // Login Button
-          Consumer<AuthProvider>(
-            builder: (context, auth, _) {
-              return ElevatedButton(
-                onPressed: auth.isLoading ? null : _loginMahasiswa,
-                child: auth.isLoading
-                    ? const SizedBox(
-                        width: 22,
-                        height: 22,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2.5,
-                        ),
-                      )
-                    : const Text('Masuk sebagai Mahasiswa'),
-              );
-            },
+  Widget _buildPasswordField() {
+    return TextFormField(
+      controller: _passwordController,
+      obscureText: _obscurePassword,
+      style: const TextStyle(
+        fontFamily: 'PlusJakartaSans',
+        fontSize: 14,
+        color: AppColors.onSurface,
+      ),
+      decoration: InputDecoration(
+        hintText: 'Kata Sandi',
+        prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppColors.onSurfaceVariant, size: 20),
+        suffixIcon: IconButton(
+          icon: Icon(
+            _obscurePassword
+                ? Icons.visibility_outlined
+                : Icons.visibility_off_outlined,
+            color: AppColors.onSurfaceVariant,
+            size: 20,
+          ),
+          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+        ),
+      ),
+      validator: (v) {
+        if (v == null || v.isEmpty) return 'Password wajib diisi';
+        return null;
+      },
+    );
+  }
+
+  Widget _buildLoginButton() {
+    return Consumer<AuthProvider>(
+      builder: (context, auth, _) {
+        return GestureDetector(
+          onTap: auth.isLoading ? null : _login,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            width: double.infinity,
+            height: 52,
+            decoration: BoxDecoration(
+              color: auth.isLoading
+                  ? AppColors.tertiary.withValues(alpha: 0.6)
+                  : AppColors.tertiary,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: auth.isLoading
+                  ? []
+                  : [
+                      BoxShadow(
+                        color: AppColors.tertiaryAlt.withValues(alpha: 0.35),
+                        blurRadius: 20,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+            ),
+            child: Center(
+              child: auth.isLoading
+                  ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        color: AppColors.onTertiary,
+                        strokeWidth: 2.5,
+                      ),
+                    )
+                  : const Text(
+                      'Masuk',
+                      style: TextStyle(
+                        fontFamily: 'PlusJakartaSans',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.onTertiary,
+                      ),
+                    ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildInfoHint() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.glassBorder),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.info_outline_rounded, color: AppColors.secondary, size: 16),
+          const SizedBox(width: 10),
+          Expanded(
+            child: RichText(
+              text: const TextSpan(
+                style: TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontSize: 12,
+                  color: AppColors.onSurfaceVariant,
+                  height: 1.5,
+                ),
+                children: [
+                  TextSpan(
+                    text: 'Mahasiswa: ',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.tertiaryAlt,
+                    ),
+                  ),
+                  TextSpan(text: 'Gunakan NOBP & password SIAKAD.\n'),
+                  TextSpan(
+                    text: 'Admin / Alumni: ',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.secondary,
+                    ),
+                  ),
+                  TextSpan(text: 'Gunakan email & password akun Anda.'),
+                ],
+              ),
+            ),
           ),
         ],
       ),
     );
   }
+}
 
-  /// Form login admin dengan email
-  Widget _buildAdminForm() {
-    return Form(
-      key: _adminFormKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Login Admin BEM',
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Khusus pengurus BEM dan admin kampus',
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-          const SizedBox(height: 20),
+/// Tab item widget untuk header card
+class _TabItem extends StatelessWidget {
+  final String label;
+  final bool isActive;
+  final VoidCallback onTap;
 
-          // Email Field
-          TextFormField(
-            controller: _emailController,
-            keyboardType: TextInputType.emailAddress,
-            decoration: const InputDecoration(
-              labelText: 'Email',
-              hintText: 'admin@jayanusa.ac.id',
-              prefixIcon: Icon(Icons.email_outlined),
+  const _TabItem({
+    required this.label,
+    required this.isActive,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: isActive ? AppColors.tertiaryAlt : Colors.transparent,
+              width: 2,
             ),
-            validator: (v) {
-              if (v == null || v.trim().isEmpty) return 'Email wajib diisi';
-              if (!v.contains('@')) return 'Format email tidak valid';
-              return null;
-            },
           ),
-          const SizedBox(height: 14),
-
-          // Password Field
-          TextFormField(
-            controller: _adminPasswordController,
-            obscureText: _obscureAdminPassword,
-            decoration: InputDecoration(
-              labelText: 'Password',
-              hintText: 'Masukkan password',
-              prefixIcon: const Icon(Icons.lock_outline),
-              suffixIcon: IconButton(
-                icon: Icon(
-                  _obscureAdminPassword
-                      ? Icons.visibility_outlined
-                      : Icons.visibility_off_outlined,
-                ),
-                onPressed: () => setState(
-                    () => _obscureAdminPassword = !_obscureAdminPassword),
-              ),
-            ),
-            validator: (v) {
-              if (v == null || v.isEmpty) return 'Password wajib diisi';
-              if (v.length < 8) return 'Password minimal 8 karakter';
-              return null;
-            },
+        ),
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: isActive ? AppColors.tertiaryAlt : AppColors.onSurfaceVariant,
           ),
-          const SizedBox(height: 24),
-
-          // Login Button
-          Consumer<AuthProvider>(
-            builder: (context, auth, _) {
-              return ElevatedButton(
-                onPressed: auth.isLoading ? null : _loginAdmin,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.secondary,
-                ),
-                child: auth.isLoading
-                    ? const SizedBox(
-                        width: 22,
-                        height: 22,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2.5,
-                        ),
-                      )
-                    : const Text('Masuk sebagai Admin'),
-              );
-            },
-          ),
-        ],
+        ),
       ),
     );
   }
