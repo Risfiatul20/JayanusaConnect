@@ -1,12 +1,17 @@
 class AppConstants {
-  // API Base URL - ganti sesuai IP komputer saat testing di device fisik
+  // API Base URL JAYANUSA Connect (Laravel backend kita)
   static const String baseUrl = 'http://10.0.2.2:8000/api'; // Android emulator
   // static const String baseUrl = 'http://localhost:8000/api'; // Web/iOS simulator
-  // static const String baseUrl = 'http://192.168.1.x:8000/api'; // Device fisik (ganti IP)
+  // static const String baseUrl = 'http://192.168.1.x:8000/api'; // Device fisik
+
+  // API Kampus JAYANUSA (sistem voting/akademik eksternal)
+  static const String kampusApiUrl = 'https://api.novinaldi.my.id/api';
+  static const String kampusLoginEndpoint = '/login-voting';
 
   // Storage Keys
   static const String tokenKey = 'auth_token';
   static const String userKey = 'auth_user';
+  static const String nobpKey = 'auth_nobp'; // NOBP dari sistem kampus
 
   // Pagination
   static const int perPage = 10;

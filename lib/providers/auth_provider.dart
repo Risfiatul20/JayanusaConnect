@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
+import '../services/kampus_auth_service.dart';
 
-enum AuthStatus { initial, loading, authenticated, unauthenticated, error }
+enum AuthStatus { initial, loading, authenticated, unauthenticated }
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
+  final KampusAuthService _kampusAuthService = KampusAuthService();
 
   AuthStatus _status = AuthStatus.initial;
   UserModel? _user;
@@ -18,7 +20,7 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoading => _status == AuthStatus.loading;
   bool get isAdmin => _user?.isAdmin ?? false;
 
-  // Cek status login saat app dibuka
+  /// Cek status login saat app dibuka
   Future<void> checkAuthStatus() async {
     _status = AuthStatus.loading;
     notifyListeners();
@@ -33,15 +35,20 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Login
-  Future<bool> login(String email, String password) async {
+  /// Login via API Kampus JAYANUSA menggunakan NOBP
+  /// Ini adalah login utama untuk mahasiswa
+  Future<bool> loginWithNobp(String nobp, String password) async {
     _status = AuthStatus.loading;
     _errorMessage = null;
     notifyListeners();
 
-    final result = await _authService.login(email, password);
+    final result = await _kampusAuthService.loginWithNobp(
+      nobp: nobp,
+      password: password,
+    );
+
     if (result['success'] == true) {
-      _user = result['user'];
+      _user = result['user'] as UserModel;
       _status = AuthStatus.authenticated;
       notifyListeners();
       return true;
@@ -53,55 +60,43 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  // Register
-  Future<Map<String, dynamic>> register({
-    required String name,
-    required String email,
-    required String password,
-    required String passwordConfirmation,
-    String? nim,
-    String? phone,
-    String? angkatan,
-    String? prodi,
-  }) async {
+  /// Login via backend Laravel kita (untuk admin BEM / super admin)
+  Future<bool> loginAdmin(String email, String password) async {
     _status = AuthStatus.loading;
     _errorMessage = null;
     notifyListeners();
 
-    final result = await _authService.register(
-      name: name,
-      email: email,
-      password: password,
-      passwordConfirmation: passwordConfirmation,
-      nim: nim,
-      phone: phone,
-      angkatan: angkatan,
-      prodi: prodi,
-    );
-
+    final result = await _authService.login(email, password);
     if (result['success'] == true) {
-      _user = result['user'];
+      _user = result['user'] as UserModel;
       _status = AuthStatus.authenticated;
+      notifyListeners();
+      return true;
     } else {
       _errorMessage = result['message'];
       _status = AuthStatus.unauthenticated;
+      notifyListeners();
+      return false;
     }
-    notifyListeners();
-    return result;
   }
 
-  // Logout
+  /// Logout — handle kedua jenis login
   Future<void> logout() async {
     _status = AuthStatus.loading;
     notifyListeners();
 
-    await _authService.logout();
+    if (_user?.isKampusLogin == true) {
+      await _kampusAuthService.logout();
+    } else {
+      await _authService.logout();
+    }
+
     _user = null;
     _status = AuthStatus.unauthenticated;
     notifyListeners();
   }
 
-  // Update user data lokal
+  /// Update user data lokal
   void updateUser(UserModel user) {
     _user = user;
     notifyListeners();
