@@ -6,9 +6,8 @@ import '../../providers/auth_provider.dart';
 import '../home/home_screen.dart';
 
 /// Login Screen — JAYANUSA Neon-Glass Design
-/// Satu form untuk semua role: Mahasiswa (NOBP), Admin BEM (email), Alumni (email)
-/// Logic: jika identifier berisi '@' → login via backend Laravel
-///        jika identifier angka saja → login via API kampus (NOBP)
+/// Tab Masuk  : satu form untuk semua role (NOBP → mahasiswa, email → admin/alumni)
+/// Tab Daftar : form register khusus Admin BEM via backend Laravel
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -18,74 +17,131 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen>
     with SingleTickerProviderStateMixin {
-  final _formKey = GlobalKey<FormState>();
-  final _identifierController = TextEditingController();
-  final _passwordController = TextEditingController();
-  bool _obscurePassword = true;
-
-  // Tab: 0 = Masuk, 1 = Info
   late TabController _tabController;
+  int _activeTab = 0; // 0 = Masuk, 1 = Daftar
+
+  // ── Form Login ────────────────────────────────────────────────────────────
+  final _loginFormKey = GlobalKey<FormState>();
+  final _identifierCtrl = TextEditingController();
+  final _loginPasswordCtrl = TextEditingController();
+  bool _obscureLogin = true;
+
+  // ── Form Register ─────────────────────────────────────────────────────────
+  final _registerFormKey = GlobalKey<FormState>();
+  final _nameCtrl = TextEditingController();
+  final _emailCtrl = TextEditingController();
+  final _nimCtrl = TextEditingController();
+  final _registerPasswordCtrl = TextEditingController();
+  final _confirmPasswordCtrl = TextEditingController();
+  bool _obscureRegister = true;
+  bool _obscureConfirm = true;
+  String? _selectedProdi;
+  String? _selectedAngkatan;
+
+  static const _prodiList = [
+    'Sistem Informasi',
+    'Teknik Informatika',
+    'Manajemen Informatika',
+  ];
+  static const _angkatanList = ['2020', '2021', '2022', '2023', '2024'];
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 2, vsync: this)
+      ..addListener(() {
+        if (_tabController.indexIsChanging) return;
+        setState(() => _activeTab = _tabController.index);
+      });
   }
 
   @override
   void dispose() {
     _tabController.dispose();
-    _identifierController.dispose();
-    _passwordController.dispose();
+    _identifierCtrl.dispose();
+    _loginPasswordCtrl.dispose();
+    _nameCtrl.dispose();
+    _emailCtrl.dispose();
+    _nimCtrl.dispose();
+    _registerPasswordCtrl.dispose();
+    _confirmPasswordCtrl.dispose();
     super.dispose();
   }
 
-  /// Deteksi otomatis jenis login berdasarkan identifier
-  bool get _isEmailLogin => _identifierController.text.trim().contains('@');
+  bool get _isEmailLogin => _identifierCtrl.text.trim().contains('@');
 
+  // ── Login logic ───────────────────────────────────────────────────────────
   Future<void> _login() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_loginFormKey.currentState!.validate()) return;
+    final auth = context.read<AuthProvider>();
+    final id = _identifierCtrl.text.trim();
+    final pw = _loginPasswordCtrl.text;
 
-    final identifier = _identifierController.text.trim();
-    final password = _passwordController.text;
-    final authProvider = context.read<AuthProvider>();
-    bool success;
-
-    if (_isEmailLogin) {
-      // Admin BEM / Super Admin / Alumni → backend Laravel
-      success = await authProvider.loginAdmin(identifier, password);
-    } else {
-      // Mahasiswa → API kampus via NOBP
-      success = await authProvider.loginWithNobp(identifier, password);
-    }
+    final success = _isEmailLogin
+        ? await auth.loginAdmin(id, pw)
+        : await auth.loginWithNobp(id, pw);
 
     if (!mounted) return;
-
     if (success) {
       Navigator.pushReplacement(
         context,
         PageRouteBuilder(
           pageBuilder: (_, __, ___) => const HomeScreen(),
-          transitionsBuilder: (_, animation, __, child) =>
-              FadeTransition(opacity: animation, child: child),
-          transitionDuration: const Duration(milliseconds: 400),
+          transitionsBuilder: (_, anim, __, child) =>
+              FadeTransition(opacity: anim, child: child),
+          transitionDuration: const Duration(milliseconds: 350),
         ),
       );
     } else {
-      _showError(authProvider.errorMessage ?? 'Login gagal. Periksa kembali data Anda.');
+      _showSnack(auth.errorMessage ?? 'Login gagal. Periksa kembali data Anda.', isError: true);
     }
   }
 
-  void _showError(String message) {
+  // ── Register logic ────────────────────────────────────────────────────────
+  Future<void> _register() async {
+    if (!_registerFormKey.currentState!.validate()) return;
+    final auth = context.read<AuthProvider>();
+
+    final result = await auth.register(
+      name: _nameCtrl.text.trim(),
+      email: _emailCtrl.text.trim(),
+      password: _registerPasswordCtrl.text,
+      passwordConfirmation: _confirmPasswordCtrl.text,
+      nim: _nimCtrl.text.trim().isEmpty ? null : _nimCtrl.text.trim(),
+      angkatan: _selectedAngkatan,
+      prodi: _selectedProdi,
+    );
+
+    if (!mounted) return;
+    if (result['success'] == true) {
+      Navigator.pushReplacement(
+        context,
+        PageRouteBuilder(
+          pageBuilder: (_, __, ___) => const HomeScreen(),
+          transitionsBuilder: (_, anim, __, child) =>
+              FadeTransition(opacity: anim, child: child),
+          transitionDuration: const Duration(milliseconds: 350),
+        ),
+      );
+    } else {
+      _showSnack(result['message'] ?? 'Registrasi gagal.', isError: true);
+    }
+  }
+
+  void _showSnack(String msg, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.error_outline_rounded, color: Colors.white, size: 18),
+            Icon(
+              isError ? Icons.error_outline_rounded : Icons.check_circle_outline_rounded,
+              color: Colors.white,
+              size: 18,
+            ),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                message,
+                msg,
                 style: const TextStyle(
                   fontFamily: 'PlusJakartaSans',
                   fontSize: 13,
@@ -95,7 +151,7 @@ class _LoginScreenState extends State<LoginScreen>
             ),
           ],
         ),
-        backgroundColor: AppColors.errorContainer,
+        backgroundColor: isError ? AppColors.errorContainer : AppColors.tertiaryContainer,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         margin: const EdgeInsets.all(16),
@@ -104,69 +160,37 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
+  // ── Build ─────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Stack(
         children: [
-          // ── Ambient background glow ──────────────────────────────────────
+          // Ambient glow kiri atas
           Positioned(
-            top: -100,
-            left: -100,
-            child: Container(
-              width: 400,
-              height: 400,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    const Color(0xFF3B2FC9).withValues(alpha: 0.25),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
+            top: -120,
+            left: -120,
+            child: _glowCircle(400, const Color(0xFF3B2FC9), 0.22),
           ),
+          // Ambient glow kanan bawah
           Positioned(
             bottom: -80,
             right: -80,
-            child: Container(
-              width: 300,
-              height: 300,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    AppColors.tertiaryAlt.withValues(alpha: 0.12),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
+            child: _glowCircle(280, AppColors.tertiaryAlt, 0.10),
           ),
 
-          // ── Main content ─────────────────────────────────────────────────
           SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Column(
                 children: [
-                  const SizedBox(height: 48),
-
-                  // ── Brand Header ─────────────────────────────────────────
+                  const SizedBox(height: 44),
                   _buildBrandHeader(),
-
-                  const SizedBox(height: 36),
-
-                  // ── Glass Card ───────────────────────────────────────────
+                  const SizedBox(height: 32),
                   _buildGlassCard(),
-
-                  const SizedBox(height: 24),
-
-                  // ── Info hint ────────────────────────────────────────────
+                  const SizedBox(height: 20),
                   _buildInfoHint(),
-
                   const SizedBox(height: 40),
                 ],
               ),
@@ -177,32 +201,40 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
+  Widget _glowCircle(double size, Color color, double opacity) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RadialGradient(
+          colors: [color.withValues(alpha: opacity), Colors.transparent],
+        ),
+      ),
+    );
+  }
+
+  // ── Brand Header ──────────────────────────────────────────────────────────
   Widget _buildBrandHeader() {
     return Column(
       children: [
-        // Logo glass container
         Container(
           width: 80,
           height: 80,
           decoration: BoxDecoration(
             color: AppColors.glassSurface,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppColors.glassBorder, width: 1),
+            border: Border.all(color: AppColors.glassBorder),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.2),
+                color: AppColors.primary.withValues(alpha: 0.18),
                 blurRadius: 24,
-                spreadRadius: 0,
               ),
             ],
           ),
-          child: const Icon(
-            Icons.school_rounded,
-            size: 40,
-            color: AppColors.primary,
-          ),
+          child: const Icon(Icons.school_rounded, size: 40, color: AppColors.primary),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
         Text(
           AppConstants.appName,
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
@@ -210,239 +242,444 @@ class _LoginScreenState extends State<LoginScreen>
                 letterSpacing: -0.02,
               ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 5),
         Text(
           'Pusat Digital Aspirasi & Karir Mahasiswa',
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColors.onSurfaceVariant,
-                fontSize: 13,
-              ),
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 13),
           textAlign: TextAlign.center,
         ),
       ],
     );
   }
 
+  // ── Glass Card ────────────────────────────────────────────────────────────
   Widget _buildGlassCard() {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.glassSurface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.glassBorder, width: 1),
+        border: Border.all(color: AppColors.glassBorder),
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── Tab header ─────────────────────────────────────────────
-              _buildTabHeader(),
-
-              const SizedBox(height: 24),
-
-              // ── Form ───────────────────────────────────────────────────
-              Form(
-                key: _formKey,
-                child: Column(
-                  children: [
-                    // Identifier field
-                    _buildIdentifierField(),
-
-                    const SizedBox(height: 16),
-
-                    // Password field
-                    _buildPasswordField(),
-
-                    const SizedBox(height: 28),
-
-                    // Login button
-                    _buildLoginButton(),
-                  ],
-                ),
-              ),
-            ],
+      child: Column(
+        children: [
+          // Tab bar
+          _buildTabBar(),
+          // Tab content
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 250),
+            transitionBuilder: (child, anim) =>
+                FadeTransition(opacity: anim, child: child),
+            child: _activeTab == 0
+                ? _buildLoginForm()
+                : _buildRegisterForm(),
           ),
-        ),
+        ],
       ),
     );
   }
 
-  Widget _buildTabHeader() {
-    return Row(
-      children: [
-        Expanded(
-          child: _TabItem(
+  // ── Tab Bar ───────────────────────────────────────────────────────────────
+  Widget _buildTabBar() {
+    return Container(
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: AppColors.glassBorder)),
+      ),
+      child: Row(
+        children: [
+          _TabItem(
             label: 'Masuk',
-            isActive: true,
-            onTap: () {},
+            isActive: _activeTab == 0,
+            onTap: () {
+              _tabController.animateTo(0);
+              setState(() => _activeTab = 0);
+            },
           ),
-        ),
-        Expanded(
-          child: _TabItem(
-            label: 'Tentang',
-            isActive: false,
-            onTap: () {},
+          _TabItem(
+            label: 'Daftar',
+            isActive: _activeTab == 1,
+            onTap: () {
+              _tabController.animateTo(1);
+              setState(() => _activeTab = 1);
+            },
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
-  Widget _buildIdentifierField() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TextFormField(
-          controller: _identifierController,
-          keyboardType: TextInputType.emailAddress,
-          style: const TextStyle(
-            fontFamily: 'PlusJakartaSans',
-            fontSize: 14,
-            color: AppColors.onSurface,
-          ),
-          onChanged: (_) => setState(() {}), // rebuild untuk update hint
-          decoration: InputDecoration(
-            hintText: 'Email atau NOBP',
-            prefixIcon: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
-              child: Icon(
-                _isEmailLogin ? Icons.email_outlined : Icons.badge_outlined,
-                key: ValueKey(_isEmailLogin),
-                color: AppColors.onSurfaceVariant,
-                size: 20,
+  // ── Login Form ────────────────────────────────────────────────────────────
+  Widget _buildLoginForm() {
+    return Padding(
+      key: const ValueKey('login'),
+      padding: const EdgeInsets.all(24),
+      child: Form(
+        key: _loginFormKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Identifier
+            TextFormField(
+              controller: _identifierCtrl,
+              keyboardType: TextInputType.emailAddress,
+              style: const TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 14,
+                color: AppColors.onSurface,
               ),
+              onChanged: (_) => setState(() {}),
+              decoration: InputDecoration(
+                hintText: 'Email atau NOBP',
+                prefixIcon: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  child: Icon(
+                    _isEmailLogin ? Icons.email_outlined : Icons.badge_outlined,
+                    key: ValueKey(_isEmailLogin),
+                    color: AppColors.onSurfaceVariant,
+                    size: 20,
+                  ),
+                ),
+                suffixIcon: _identifierCtrl.text.isNotEmpty
+                    ? _roleChip(_isEmailLogin ? 'Admin' : 'Mahasiswa', _isEmailLogin)
+                    : null,
+              ),
+              validator: (v) {
+                if (v == null || v.trim().isEmpty) return 'Email atau NOBP wajib diisi';
+                if (!v.contains('@') && v.trim().length < 5) return 'NOBP minimal 5 karakter';
+                if (v.contains('@') && !RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(v)) {
+                  return 'Format email tidak valid';
+                }
+                return null;
+              },
             ),
-            // Suffix chip menunjukkan mode login
-            suffixIcon: _identifierController.text.isNotEmpty
-                ? Container(
-                    margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: _isEmailLogin
-                          ? AppColors.secondaryContainer.withValues(alpha: 0.4)
-                          : AppColors.tertiaryContainer.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: _isEmailLogin
-                            ? AppColors.secondary.withValues(alpha: 0.4)
-                            : AppColors.tertiaryAlt.withValues(alpha: 0.4),
-                        width: 1,
-                      ),
-                    ),
-                    child: Text(
-                      _isEmailLogin ? 'Admin' : 'Mahasiswa',
-                      style: TextStyle(
-                        fontFamily: 'PlusJakartaSans',
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.05,
-                        color: _isEmailLogin
-                            ? AppColors.secondary
-                            : AppColors.tertiaryAlt,
-                      ),
-                    ),
-                  )
-                : null,
-          ),
-          validator: (v) {
-            if (v == null || v.trim().isEmpty) {
-              return 'Email atau NOBP wajib diisi';
-            }
-            if (!v.contains('@') && v.trim().length < 5) {
-              return 'NOBP minimal 5 karakter';
-            }
-            if (v.contains('@') && !RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(v)) {
-              return 'Format email tidak valid';
-            }
-            return null;
-          },
-        ),
-      ],
-    );
-  }
+            const SizedBox(height: 14),
 
-  Widget _buildPasswordField() {
-    return TextFormField(
-      controller: _passwordController,
-      obscureText: _obscurePassword,
-      style: const TextStyle(
-        fontFamily: 'PlusJakartaSans',
-        fontSize: 14,
-        color: AppColors.onSurface,
-      ),
-      decoration: InputDecoration(
-        hintText: 'Kata Sandi',
-        prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppColors.onSurfaceVariant, size: 20),
-        suffixIcon: IconButton(
-          icon: Icon(
-            _obscurePassword
-                ? Icons.visibility_outlined
-                : Icons.visibility_off_outlined,
-            color: AppColors.onSurfaceVariant,
-            size: 20,
-          ),
-          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-        ),
-      ),
-      validator: (v) {
-        if (v == null || v.isEmpty) return 'Password wajib diisi';
-        return null;
-      },
-    );
-  }
+            // Password
+            TextFormField(
+              controller: _loginPasswordCtrl,
+              obscureText: _obscureLogin,
+              style: const TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 14,
+                color: AppColors.onSurface,
+              ),
+              decoration: InputDecoration(
+                hintText: 'Kata Sandi',
+                prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppColors.onSurfaceVariant, size: 20),
+                suffixIcon: _visibilityBtn(_obscureLogin, () => setState(() => _obscureLogin = !_obscureLogin)),
+              ),
+              validator: (v) => (v == null || v.isEmpty) ? 'Password wajib diisi' : null,
+            ),
+            const SizedBox(height: 24),
 
-  Widget _buildLoginButton() {
-    return Consumer<AuthProvider>(
-      builder: (context, auth, _) {
-        return GestureDetector(
-          onTap: auth.isLoading ? null : _login,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 150),
-            width: double.infinity,
-            height: 52,
-            decoration: BoxDecoration(
-              color: auth.isLoading
-                  ? AppColors.tertiary.withValues(alpha: 0.6)
-                  : AppColors.tertiary,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: auth.isLoading
-                  ? []
-                  : [
-                      BoxShadow(
-                        color: AppColors.tertiaryAlt.withValues(alpha: 0.35),
-                        blurRadius: 20,
-                        offset: const Offset(0, 6),
+            // Button
+            _buildCyanButton(
+              label: 'Masuk',
+              onTap: _login,
+            ),
+
+            const SizedBox(height: 16),
+
+            // Switch to register
+            Center(
+              child: GestureDetector(
+                onTap: () {
+                  _tabController.animateTo(1);
+                  setState(() => _activeTab = 1);
+                },
+                child: RichText(
+                  text: const TextSpan(
+                    style: TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 13,
+                      color: AppColors.onSurfaceVariant,
+                    ),
+                    children: [
+                      TextSpan(text: 'Belum punya akun? '),
+                      TextSpan(
+                        text: 'Daftar Sekarang',
+                        style: TextStyle(
+                          color: AppColors.tertiaryAlt,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ],
+                  ),
+                ),
+              ),
             ),
-            child: Center(
-              child: auth.isLoading
-                  ? const SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: CircularProgressIndicator(
-                        color: AppColors.onTertiary,
-                        strokeWidth: 2.5,
-                      ),
-                    )
-                  : const Text(
-                      'Masuk',
-                      style: TextStyle(
-                        fontFamily: 'PlusJakartaSans',
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.onTertiary,
-                      ),
-                    ),
-            ),
-          ),
-        );
-      },
+          ],
+        ),
+      ),
     );
   }
 
+  // ── Register Form ─────────────────────────────────────────────────────────
+  Widget _buildRegisterForm() {
+    return Padding(
+      key: const ValueKey('register'),
+      padding: const EdgeInsets.all(24),
+      child: Form(
+        key: _registerFormKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Nama
+            _inputField(
+              controller: _nameCtrl,
+              hint: 'Nama Lengkap',
+              icon: Icons.person_outline_rounded,
+              validator: (v) => (v == null || v.trim().isEmpty) ? 'Nama wajib diisi' : null,
+            ),
+            const SizedBox(height: 12),
+
+            // Email
+            _inputField(
+              controller: _emailCtrl,
+              hint: 'Email',
+              icon: Icons.email_outlined,
+              keyboardType: TextInputType.emailAddress,
+              validator: (v) {
+                if (v == null || v.trim().isEmpty) return 'Email wajib diisi';
+                if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(v)) return 'Format email tidak valid';
+                return null;
+              },
+            ),
+            const SizedBox(height: 12),
+
+            // NIM (opsional)
+            _inputField(
+              controller: _nimCtrl,
+              hint: 'NIM (opsional)',
+              icon: Icons.badge_outlined,
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 12),
+
+            // Prodi dropdown
+            _dropdownField(
+              hint: 'Program Studi',
+              icon: Icons.school_outlined,
+              value: _selectedProdi,
+              items: _prodiList,
+              onChanged: (v) => setState(() => _selectedProdi = v),
+            ),
+            const SizedBox(height: 12),
+
+            // Angkatan dropdown
+            _dropdownField(
+              hint: 'Angkatan',
+              icon: Icons.calendar_today_outlined,
+              value: _selectedAngkatan,
+              items: _angkatanList,
+              onChanged: (v) => setState(() => _selectedAngkatan = v),
+            ),
+            const SizedBox(height: 12),
+
+            // Password
+            TextFormField(
+              controller: _registerPasswordCtrl,
+              obscureText: _obscureRegister,
+              style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 14, color: AppColors.onSurface),
+              decoration: InputDecoration(
+                hintText: 'Password',
+                prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppColors.onSurfaceVariant, size: 20),
+                suffixIcon: _visibilityBtn(_obscureRegister, () => setState(() => _obscureRegister = !_obscureRegister)),
+              ),
+              validator: (v) {
+                if (v == null || v.isEmpty) return 'Password wajib diisi';
+                if (v.length < 8) return 'Password minimal 8 karakter';
+                return null;
+              },
+            ),
+            const SizedBox(height: 12),
+
+            // Konfirmasi password
+            TextFormField(
+              controller: _confirmPasswordCtrl,
+              obscureText: _obscureConfirm,
+              style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 14, color: AppColors.onSurface),
+              decoration: InputDecoration(
+                hintText: 'Konfirmasi Password',
+                prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppColors.onSurfaceVariant, size: 20),
+                suffixIcon: _visibilityBtn(_obscureConfirm, () => setState(() => _obscureConfirm = !_obscureConfirm)),
+              ),
+              validator: (v) {
+                if (v == null || v.isEmpty) return 'Konfirmasi password wajib diisi';
+                if (v != _registerPasswordCtrl.text) return 'Password tidak cocok';
+                return null;
+              },
+            ),
+            const SizedBox(height: 24),
+
+            // Button
+            _buildCyanButton(label: 'Daftar Sekarang', onTap: _register),
+
+            const SizedBox(height: 16),
+
+            // Switch to login
+            Center(
+              child: GestureDetector(
+                onTap: () {
+                  _tabController.animateTo(0);
+                  setState(() => _activeTab = 0);
+                },
+                child: RichText(
+                  text: const TextSpan(
+                    style: TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 13,
+                      color: AppColors.onSurfaceVariant,
+                    ),
+                    children: [
+                      TextSpan(text: 'Sudah punya akun? '),
+                      TextSpan(
+                        text: 'Masuk',
+                        style: TextStyle(
+                          color: AppColors.tertiaryAlt,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Shared Widgets ────────────────────────────────────────────────────────
+  Widget _buildCyanButton({required String label, required VoidCallback onTap}) {
+    return Consumer<AuthProvider>(
+      builder: (_, auth, __) => GestureDetector(
+        onTap: auth.isLoading ? null : onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          width: double.infinity,
+          height: 52,
+          decoration: BoxDecoration(
+            color: auth.isLoading
+                ? AppColors.tertiary.withValues(alpha: 0.55)
+                : AppColors.tertiary,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: auth.isLoading
+                ? []
+                : [
+                    BoxShadow(
+                      color: AppColors.tertiaryAlt.withValues(alpha: 0.32),
+                      blurRadius: 18,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+          ),
+          child: Center(
+            child: auth.isLoading
+                ? const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      color: AppColors.onTertiary,
+                      strokeWidth: 2.5,
+                    ),
+                  )
+                : Text(
+                    label,
+                    style: const TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.onTertiary,
+                    ),
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _inputField({
+    required TextEditingController controller,
+    required String hint,
+    required IconData icon,
+    TextInputType keyboardType = TextInputType.text,
+    String? Function(String?)? validator,
+  }) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 14, color: AppColors.onSurface),
+      decoration: InputDecoration(
+        hintText: hint,
+        prefixIcon: Icon(icon, color: AppColors.onSurfaceVariant, size: 20),
+      ),
+      validator: validator,
+    );
+  }
+
+  Widget _dropdownField({
+    required String hint,
+    required IconData icon,
+    required String? value,
+    required List<String> items,
+    required void Function(String?) onChanged,
+  }) {
+    return DropdownButtonFormField<String>(
+      value: value,
+      dropdownColor: AppColors.surfaceContainerHigh,
+      style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 14, color: AppColors.onSurface),
+      decoration: InputDecoration(
+        hintText: hint,
+        prefixIcon: Icon(icon, color: AppColors.onSurfaceVariant, size: 20),
+      ),
+      items: items
+          .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+          .toList(),
+      onChanged: onChanged,
+    );
+  }
+
+  Widget _visibilityBtn(bool obscure, VoidCallback onTap) {
+    return IconButton(
+      icon: Icon(
+        obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+        color: AppColors.onSurfaceVariant,
+        size: 20,
+      ),
+      onPressed: onTap,
+    );
+  }
+
+  Widget _roleChip(String label, bool isEmail) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: isEmail
+            ? AppColors.secondaryContainer.withValues(alpha: 0.35)
+            : AppColors.tertiaryContainer.withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isEmail
+              ? AppColors.secondary.withValues(alpha: 0.4)
+              : AppColors.tertiaryAlt.withValues(alpha: 0.4),
+        ),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontFamily: 'PlusJakartaSans',
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.05,
+          color: isEmail ? AppColors.secondary : AppColors.tertiaryAlt,
+        ),
+      ),
+    );
+  }
+
+  // ── Info Hint ─────────────────────────────────────────────────────────────
   Widget _buildInfoHint() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -468,20 +705,14 @@ class _LoginScreenState extends State<LoginScreen>
                 children: [
                   TextSpan(
                     text: 'Mahasiswa: ',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.tertiaryAlt,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.tertiaryAlt),
                   ),
-                  TextSpan(text: 'Gunakan NOBP & password SIAKAD.\n'),
+                  TextSpan(text: 'Masuk dengan NOBP & password SIAKAD.\n'),
                   TextSpan(
                     text: 'Admin / Alumni: ',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.secondary,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.secondary),
                   ),
-                  TextSpan(text: 'Gunakan email & password akun Anda.'),
+                  TextSpan(text: 'Masuk atau daftar dengan email.'),
                 ],
               ),
             ),
@@ -492,7 +723,7 @@ class _LoginScreenState extends State<LoginScreen>
   }
 }
 
-/// Tab item widget untuk header card
+// ── Tab Item Widget ───────────────────────────────────────────────────────────
 class _TabItem extends StatelessWidget {
   final String label;
   final bool isActive;
@@ -506,26 +737,28 @@ class _TabItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: isActive ? AppColors.tertiaryAlt : Colors.transparent,
-              width: 2,
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: isActive ? AppColors.tertiaryAlt : Colors.transparent,
+                width: 2,
+              ),
             ),
           ),
-        ),
-        child: Text(
-          label,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontFamily: 'PlusJakartaSans',
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: isActive ? AppColors.tertiaryAlt : AppColors.onSurfaceVariant,
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontFamily: 'PlusJakartaSans',
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: isActive ? AppColors.tertiaryAlt : AppColors.onSurfaceVariant,
+            ),
           ),
         ),
       ),
