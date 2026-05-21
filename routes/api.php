@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BemProgramController;
 use App\Http\Controllers\Api\JobController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\OtpController;
 use App\Http\Controllers\Api\PortfolioController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\RegistrationController;
@@ -21,8 +22,17 @@ Route::post('/auth/login',           [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->group(function () {
 
     // Auth
-    Route::post('/auth/logout', [AuthController::class, 'logout']);
-    Route::get('/auth/me',      [AuthController::class, 'me']);
+    Route::post('/auth/logout',             [AuthController::class, 'logout']);
+    Route::get('/auth/me',                  [AuthController::class, 'me']);
+    Route::get('/auth/check-verification',  [AuthController::class, 'checkVerification']);
+    Route::post('/auth/resend-otp',         [AuthController::class, 'resendOtp']);
+
+    // ── OTP (Admin only) ──────────────────────────────────────────────────────
+    Route::middleware('role:admin_bem,super_admin')->group(function () {
+        Route::get('otp/pending',          [OtpController::class, 'pending']);
+        Route::post('otp/verify',          [OtpController::class, 'verify']);
+        Route::delete('otp/{otp}/reject',  [OtpController::class, 'reject']);
+    });
 
     // ── PROFILE ───────────────────────────────────────────────────────────────
     Route::get('profile',                  [ProfileController::class, 'show']);
