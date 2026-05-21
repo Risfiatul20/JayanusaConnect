@@ -121,7 +121,13 @@ class AuthService {
         await prefs.setString(AppConstants.tokenKey, token);
         await prefs.setString(AppConstants.userKey, jsonEncode(user.toJson()));
 
-        return {'success': true, 'user': user, 'token': token};
+        // Return semua data termasuk otp_code dan wa_link untuk OTP screen
+        return {
+          'success': true,
+          'user': user,
+          'token': token,
+          'data': data['data'], // teruskan seluruh data dari backend
+        };
       }
       return {'success': false, 'message': data['message']};
     } on DioException catch (e) {

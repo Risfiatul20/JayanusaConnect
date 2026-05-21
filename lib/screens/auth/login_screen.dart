@@ -183,16 +183,22 @@ class _LoginScreenState extends State<LoginScreen>
 
     if (!mounted) return;
     if (result['success'] == true) {
+      // Ambil data OTP dari result — pastikan tidak null
+      final otpData = result['data'] as Map<String, dynamic>?;
+      final otpCode = otpData?['otp_code']?.toString() ?? '000000';
+      final waLink = otpData?['wa_link']?.toString() ?? '';
+      final expiresAt = otpData?['expires_at']?.toString() ?? '';
+
       // Alumni perlu verifikasi OTP via WA dulu
       Navigator.pushReplacement(
         context,
         PageRouteBuilder(
           pageBuilder: (_, __, ___) => OtpVerificationScreen(
-            otpCode:   result['data']['otp_code'],
-            waLink:    result['data']['wa_link'],
+            otpCode:   otpCode,
+            waLink:    waLink,
             userName:  _nameCtrl.text.trim(),
             phone:     _phoneCtrl.text.trim(),
-            expiresAt: result['data']['expires_at'],
+            expiresAt: expiresAt,
           ),
           transitionsBuilder: (_, anim, __, child) =>
               FadeTransition(opacity: anim, child: child),
