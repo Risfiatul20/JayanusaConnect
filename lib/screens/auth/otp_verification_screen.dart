@@ -175,18 +175,72 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
   Future<void> _openWhatsApp() async {
     final uri = Uri.parse(_currentWaLink);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-      setState(() => _waSent = true);
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Tidak dapat membuka WhatsApp. Pastikan WA terinstall.'),
-            backgroundColor: AppColors.errorContainer,
+    bool launched = false;
+
+    // Coba buka WA dulu
+    try {
+      launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      launched = false;
+    }
+
+    if (!launched && mounted) {
+      // Fallback: tampilkan dialog dengan kode OTP dan link WA
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          backgroundColor: AppColors.surfaceContainer,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text(
+            'Kirim OTP ke Admin',
+            style: TextStyle(
+              fontFamily: 'PlusJakartaSans',
+              fontWeight: FontWeight.w700,
+              color: AppColors.primary,
+            ),
           ),
-        );
-      }
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'WhatsApp tidak tersedia. Kirim pesan berikut ke Admin BEM secara manual:',
+                style: TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontSize: 13,
+                  color: AppColors.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceContainerHigh,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppColors.glassBorder),
+                ),
+                child: Text(
+                  'Halo Admin JAYANUSA Connect,\n\nSaya ${widget.userName} baru mendaftar sebagai Alumni.\nKode OTP: $_currentOtp\n\nMohon verifikasi akun saya.',
+                  style: const TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 12,
+                    color: AppColors.onSurface,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Tutup', style: TextStyle(color: AppColors.tertiaryAlt)),
+            ),
+          ],
+        ),
+      );
+    } else if (launched) {
+      setState(() => _waSent = true);
     }
   }
 
@@ -307,9 +361,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: _currentOtp.split('').map((digit) {
                             return Container(
-                              width: 44,
-                              height: 52,
-                              margin: const EdgeInsets.symmetric(horizontal: 4),
+                              width: 38,
+                              height: 46,
+                              margin: const EdgeInsets.symmetric(horizontal: 3),
                               decoration: BoxDecoration(
                                 color: AppColors.tertiaryAlt.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(10),
@@ -322,7 +376,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                                   digit,
                                   style: const TextStyle(
                                     fontFamily: 'PlusJakartaSans',
-                                    fontSize: 24,
+                                    fontSize: 22,
                                     fontWeight: FontWeight.w800,
                                     color: AppColors.tertiary,
                                   ),
