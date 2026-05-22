@@ -87,7 +87,7 @@ class _AspirationListScreenState extends State<AspirationListScreen> {
 
           // ── FAB ──────────────────────────────────────────────────────────
           Positioned(
-            bottom: 24, right: 20,
+            bottom: 80, right: 20,
             child: _buildFab(),
           ),
         ],
@@ -202,7 +202,7 @@ class _AspirationListScreenState extends State<AspirationListScreen> {
       backgroundColor: AppColors.surfaceContainer,
       onRefresh: _load,
       child: ListView.separated(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 120),
         itemCount: _aspirations.length,
         separatorBuilder: (_, __) => const SizedBox(height: 12),
         itemBuilder: (_, i) => _buildCard(_aspirations[i]),
