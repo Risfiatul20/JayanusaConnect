@@ -1,8 +1,10 @@
 class AppConstants {
   // API Base URL JAYANUSA Connect (Laravel backend kita)
-  // static const String baseUrl = 'http://10.0.2.2:8000/api'; // Android emulator
-  // static const String baseUrl = 'http://localhost:8000/api'; // Web/iOS simulator
-  static const String baseUrl = 'http://192.168.43.208:8000/api'; // HP fisik — IP laptop
+  // EMULATOR Android  → 10.0.2.2 (alias localhost dari emulator)
+  // HP Fisik          → IP laptop di jaringan yang sama
+  // Ganti sesuai kebutuhan:
+  static const String baseUrl = 'http://10.0.2.2:8000/api'; // Android emulator
+  // static const String baseUrl = 'http://192.168.1.219:8000/api'; // HP fisik (IP terbaru)
 
   // API Kampus JAYANUSA (sistem voting/akademik eksternal)
   static const String kampusApiUrl = 'https://api.novinaldi.my.id/api';
