@@ -1,0 +1,135 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-0005-0005-0005-000000000005",
+    "name": "JAYANUSA Connect - 5. OTP Alumni Verification",
+    "description": "Login admin lalu verifikasi OTP alumni yang daftar via WA",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8000", "type": "string" },
+    { "key": "token_admin", "value": "", "type": "string" },
+    { "key": "user_id_alumni", "value": "14", "type": "string" },
+    { "key": "otp_code", "value": "031061", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "STEP 1 - Login Admin BEM (auto-save token)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "var res = pm.response.json();",
+              "if (res.success) {",
+              "    pm.collectionVariables.set('token_admin', res.data.token);",
+              "    pm.test('Token admin tersimpan', function(){ pm.expect(res.data.token).to.be.a('string'); });",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Accept", "value": "application/json" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/auth/login",
+          "host": ["{{base_url}}"],
+          "path": ["api", "auth", "login"]
+        },
+        "body": {
+          "mode": "raw",
+          "options": { "raw": { "language": "json" } },
+          "raw": "{\n  \"email\": \"admin.bem@jayanusa.ac.id\",\n  \"password\": \"password123\"\n}"
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "STEP 2 - Lihat Semua OTP Pending",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Accept", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token_admin}}" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/otp/pending",
+          "host": ["{{base_url}}"],
+          "path": ["api", "otp", "pending"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "STEP 3 - Verifikasi OTP Alumni",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "var res = pm.response.json();",
+              "pm.test('Verifikasi berhasil', function(){ pm.expect(res.success).to.be.true; });",
+              "if (res.success) { console.log('Sukses: ' + res.message); }"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Accept", "value": "application/json" },
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token_admin}}" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/otp/verify",
+          "host": ["{{base_url}}"],
+          "path": ["api", "otp", "verify"]
+        },
+        "body": {
+          "mode": "raw",
+          "options": { "raw": { "language": "json" } },
+          "raw": "{\n  \"user_id\": {{user_id_alumni}},\n  \"otp_code\": \"{{otp_code}}\"\n}"
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "STEP 4 - Cek OTP Pending (harus kosong setelah verify)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Accept", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token_admin}}" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/otp/pending",
+          "host": ["{{base_url}}"],
+          "path": ["api", "otp", "pending"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "[OPSIONAL] Tolak OTP Alumni (ganti 1 dengan id OTP)",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "Accept", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token_admin}}" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/otp/1/reject",
+          "host": ["{{base_url}}"],
+          "path": ["api", "otp", "1", "reject"]
+        }
+      },
+      "response": []
+    }
+  ]
+}
