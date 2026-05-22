@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../auth/login_screen.dart';
+import '../aspiration/aspiration_list_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -14,24 +15,21 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
 
-  // ── Quick Actions ─────────────────────────────────────────────────────────
   static const _quickActions = [
-    _QuickAction(icon: Icons.campaign_outlined,      label: 'Aspirasi',    index: 1),
-    _QuickAction(icon: Icons.school_outlined,         label: 'Pelatihan',   index: 2),
-    _QuickAction(icon: Icons.folder_shared_outlined,  label: 'Portofolio',  index: 3),
-    _QuickAction(icon: Icons.work_outline_rounded,    label: 'Lowongan',    index: 4),
-    _QuickAction(icon: Icons.people_outline_rounded,  label: 'Alumni',      index: 4),
-    _QuickAction(icon: Icons.account_balance_outlined,label: 'Program BEM', index: 4),
+    _QuickAction(icon: Icons.campaign_outlined,       label: 'Aspirasi',    index: 1),
+    _QuickAction(icon: Icons.school_outlined,          label: 'Pelatihan',   index: 2),
+    _QuickAction(icon: Icons.folder_shared_outlined,   label: 'Portofolio',  index: 3),
+    _QuickAction(icon: Icons.work_outline_rounded,     label: 'Lowongan',    index: 4),
+    _QuickAction(icon: Icons.people_outline_rounded,   label: 'Alumni',      index: 4),
+    _QuickAction(icon: Icons.account_balance_outlined, label: 'Program BEM', index: 4),
   ];
 
-  // ── Dummy trainings (nanti diganti API) ───────────────────────────────────
   static const _trainings = [
     _TrainingItem(title: 'Workshop Cybersecurity Dasar', category: 'Cybersecurity', quota: 30, registered: 12),
     _TrainingItem(title: 'Bootcamp Flutter Mobile Dev',  category: 'Programming',   quota: 25, registered: 20),
     _TrainingItem(title: 'Pelatihan UI/UX dengan Figma', category: 'Desain',        quota: 20, registered: 8),
   ];
 
-  // ── Logout ────────────────────────────────────────────────────────────────
   Future<void> _logout() async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -81,107 +79,152 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      extendBodyBehindAppBar: true,
       body: Stack(
         children: [
-          // ── Ambient glow ─────────────────────────────────────────────────
+          // Ambient glow
           Positioned(
             top: -80, right: -80,
             child: _glow(300, const Color(0xFF3B2FC9), 0.18),
           ),
 
-          // ── Scrollable content ────────────────────────────────────────────
-          CustomScrollView(
-            slivers: [
-              // Top padding for AppBar
-              const SliverToBoxAdapter(child: SizedBox(height: 80)),
-
-              // Greeting
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '$greeting, ${user?.name.split(' ').first ?? 'Pengguna'}!',
-                        style: const TextStyle(
-                          fontFamily: 'PlusJakartaSans',
-                          fontSize: 14,
-                          color: AppColors.onSurfaceVariant,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Siap untuk berinovasi hari ini?',
-                        style: TextStyle(
-                          fontFamily: 'PlusJakartaSans',
-                          fontSize: 24,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.primary,
-                          letterSpacing: -0.02,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Hero Banner
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-                  child: _buildHeroBanner(),
-                ),
-              ),
-
-              // Quick Actions
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 28, 20, 0),
-                  child: _buildQuickActions(),
-                ),
-              ),
-
-              // Pelatihan Unggulan
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(0, 28, 0, 0),
-                  child: _buildTrainingSection(),
-                ),
-              ),
-
-              // Aspirasi Terbaru
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 28, 20, 0),
-                  child: _buildAspirationSection(user),
-                ),
-              ),
-
-              // Bottom padding
-              const SliverToBoxAdapter(child: SizedBox(height: 120)),
+          // Tab content
+          IndexedStack(
+            index: _currentIndex,
+            children: [
+              _buildHomeTab(user, greeting),
+              const AspirationListScreen(),
+              _buildPlaceholder('Pelatihan', Icons.school_outlined),
+              _buildPlaceholder('Portofolio', Icons.folder_shared_outlined),
+              _buildPlaceholder('Profil', Icons.person_outline),
             ],
           ),
 
-          // ── Glass TopAppBar ───────────────────────────────────────────────
-          Positioned(
-            top: 0, left: 0, right: 0,
-            child: _buildTopAppBar(user),
-          ),
+          // TopAppBar hanya di Home
+          if (_currentIndex == 0)
+            Positioned(
+              top: 0, left: 0, right: 0,
+              child: _buildTopAppBar(user),
+            ),
 
-          // ── Bottom Nav ────────────────────────────────────────────────────
+          // Bottom Nav
           Positioned(
             bottom: 0, left: 0, right: 0,
             child: _buildBottomNav(),
           ),
 
-          // ── FAB ───────────────────────────────────────────────────────────
-          Positioned(
-            bottom: 80, right: 20,
-            child: _buildFab(),
-          ),
+          // FAB hanya di Home
+          if (_currentIndex == 0)
+            Positioned(
+              bottom: 80, right: 20,
+              child: _buildFab(),
+            ),
         ],
+      ),
+    );
+  }
+
+  // ── Home Tab ──────────────────────────────────────────────────────────────
+  Widget _buildHomeTab(user, String greeting) {
+    return CustomScrollView(
+      slivers: [
+        const SliverToBoxAdapter(child: SizedBox(height: 80)),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '$greeting, ${user?.name.split(' ').first ?? 'Pengguna'}!',
+                  style: const TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 14,
+                    color: AppColors.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Siap untuk berinovasi hari ini?',
+                  style: TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
+                    letterSpacing: -0.02,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+            child: _buildHeroBanner(),
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 28, 20, 0),
+            child: _buildQuickActions(),
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(0, 28, 0, 0),
+            child: _buildTrainingSection(),
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 28, 20, 0),
+            child: _buildAspirationSection(user),
+          ),
+        ),
+        const SliverToBoxAdapter(child: SizedBox(height: 120)),
+      ],
+    );
+  }
+
+  // ── Placeholder ───────────────────────────────────────────────────────────
+  Widget _buildPlaceholder(String label, IconData icon) {
+    return Container(
+      color: AppColors.background,
+      child: SafeArea(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 72, height: 72,
+                decoration: BoxDecoration(
+                  color: AppColors.tertiary.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: AppColors.tertiary, size: 36),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Segera hadir',
+                style: TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontSize: 14,
+                  color: AppColors.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -191,9 +234,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.glassSurface,
-        border: const Border(
-          bottom: BorderSide(color: AppColors.glassBorder),
-        ),
+        border: const Border(bottom: BorderSide(color: AppColors.glassBorder)),
       ),
       child: SafeArea(
         bottom: false,
@@ -201,7 +242,6 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
           child: Row(
             children: [
-              // Avatar
               Container(
                 width: 36, height: 36,
                 decoration: BoxDecoration(
@@ -222,8 +262,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               const SizedBox(width: 10),
-
-              // App name
               const Expanded(
                 child: Text(
                   'JAYANUSA Connect',
@@ -236,8 +274,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
-
-              // Notification
               GestureDetector(
                 onTap: () {},
                 child: Container(
@@ -251,8 +287,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               const SizedBox(width: 8),
-
-              // Logout
               GestureDetector(
                 onTap: _logout,
                 child: Container(
@@ -284,7 +318,6 @@ class _HomeScreenState extends State<HomeScreen> {
       clipBehavior: Clip.antiAlias,
       child: Stack(
         children: [
-          // Gradient background
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -294,8 +327,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
-
-          // Decorative circles
           Positioned(
             top: -30, right: -30,
             child: Container(
@@ -306,18 +337,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
-          Positioned(
-            bottom: -20, left: 60,
-            child: Container(
-              width: 100, height: 100,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.primaryContainer.withValues(alpha: 0.06),
-              ),
-            ),
-          ),
-
-          // Content
           Padding(
             padding: const EdgeInsets.all(20),
             child: Column(
@@ -354,29 +373,26 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 const SizedBox(height: 14),
-                GestureDetector(
-                  onTap: () {},
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: AppColors.tertiary,
-                      borderRadius: BorderRadius.circular(8),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.tertiaryAlt.withValues(alpha: 0.4),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: const Text(
-                      'Lihat Detail',
-                      style: TextStyle(
-                        fontFamily: 'PlusJakartaSans',
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.onTertiary,
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.tertiary,
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.tertiaryAlt.withValues(alpha: 0.4),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
                       ),
+                    ],
+                  ),
+                  child: const Text(
+                    'Lihat Detail',
+                    style: TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.onTertiary,
                     ),
                   ),
                 ),
@@ -390,58 +406,53 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // ── Quick Actions ─────────────────────────────────────────────────────────
   Widget _buildQuickActions() {
-    return Column(
-      children: [
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: 1.0,
-          ),
-          itemCount: _quickActions.length,
-          itemBuilder: (_, i) => _buildActionTile(_quickActions[i]),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildActionTile(_QuickAction action) {
-    return GestureDetector(
-      onTap: () => setState(() => _currentIndex = action.index),
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.glassSurface,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.glassBorder),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 44, height: 44,
-              decoration: BoxDecoration(
-                color: AppColors.tertiary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(action.icon, color: AppColors.tertiary, size: 22),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              action.label,
-              style: const TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: AppColors.onSurface,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 1.0,
       ),
+      itemCount: _quickActions.length,
+      itemBuilder: (_, i) {
+        final a = _quickActions[i];
+        return GestureDetector(
+          onTap: () => setState(() => _currentIndex = a.index),
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppColors.glassSurface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.glassBorder),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 44, height: 44,
+                  decoration: BoxDecoration(
+                    color: AppColors.tertiary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(a.icon, color: AppColors.tertiary, size: 22),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  a.label,
+                  style: const TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.onSurface,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -486,103 +497,98 @@ class _HomeScreenState extends State<HomeScreen> {
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 20),
             itemCount: _trainings.length,
-            itemBuilder: (_, i) => _buildTrainingCard(_trainings[i]),
+            itemBuilder: (_, i) {
+              final t = _trainings[i];
+              final pct = t.quota > 0 ? t.registered / t.quota : 0.0;
+              return Container(
+                width: 220,
+                margin: const EdgeInsets.only(right: 12),
+                decoration: BoxDecoration(
+                  color: AppColors.glassSurface,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.glassBorder),
+                ),
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: AppColors.tertiary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: AppColors.tertiary.withValues(alpha: 0.25)),
+                      ),
+                      child: Text(
+                        t.category.toUpperCase(),
+                        style: const TextStyle(
+                          fontFamily: 'PlusJakartaSans',
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.tertiary,
+                          letterSpacing: 0.08,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      t.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontFamily: 'PlusJakartaSans',
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.onSurface,
+                        height: 1.3,
+                      ),
+                    ),
+                    const Spacer(),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '${t.registered}/${t.quota} peserta',
+                          style: const TextStyle(
+                            fontFamily: 'PlusJakartaSans',
+                            fontSize: 10,
+                            color: AppColors.onSurfaceVariant,
+                          ),
+                        ),
+                        Text(
+                          '${(pct * 100).toInt()}%',
+                          style: const TextStyle(
+                            fontFamily: 'PlusJakartaSans',
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.tertiaryAlt,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: pct,
+                        backgroundColor: AppColors.surfaceContainerHigh,
+                        valueColor: const AlwaysStoppedAnimation<Color>(AppColors.tertiaryAlt),
+                        minHeight: 4,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
         ),
       ],
     );
   }
 
-  Widget _buildTrainingCard(_TrainingItem t) {
-    final pct = t.quota > 0 ? t.registered / t.quota : 0.0;
-    return Container(
-      width: 220,
-      margin: const EdgeInsets.only(right: 12),
-      decoration: BoxDecoration(
-        color: AppColors.glassSurface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.glassBorder),
-      ),
-      padding: const EdgeInsets.all(14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Category badge
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(
-              color: AppColors.tertiary.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: AppColors.tertiary.withValues(alpha: 0.25)),
-            ),
-            child: Text(
-              t.category.toUpperCase(),
-              style: const TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontSize: 9,
-                fontWeight: FontWeight.w700,
-                color: AppColors.tertiary,
-                letterSpacing: 0.08,
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            t.title,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontFamily: 'PlusJakartaSans',
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: AppColors.onSurface,
-              height: 1.3,
-            ),
-          ),
-          const Spacer(),
-          // Quota bar
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                '${t.registered}/${t.quota} peserta',
-                style: const TextStyle(
-                  fontFamily: 'PlusJakartaSans',
-                  fontSize: 10,
-                  color: AppColors.onSurfaceVariant,
-                ),
-              ),
-              Text(
-                '${(pct * 100).toInt()}%',
-                style: const TextStyle(
-                  fontFamily: 'PlusJakartaSans',
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.tertiaryAlt,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: pct,
-              backgroundColor: AppColors.surfaceContainerHigh,
-              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.tertiaryAlt),
-              minHeight: 4,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   // ── Aspirasi Section ──────────────────────────────────────────────────────
   Widget _buildAspirationSection(user) {
-    // Hanya tampilkan untuk mahasiswa
     if (user?.isAdmin == true) return const SizedBox.shrink();
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -613,52 +619,54 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         const SizedBox(height: 14),
-
-        // Empty state — nanti diganti dengan data dari API
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: AppColors.glassSurface,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.glassBorder),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 44, height: 44,
-                decoration: BoxDecoration(
-                  color: AppColors.tertiary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
+        GestureDetector(
+          onTap: () => setState(() => _currentIndex = 1),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: AppColors.glassSurface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.glassBorder),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 44, height: 44,
+                  decoration: BoxDecoration(
+                    color: AppColors.tertiary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.campaign_outlined, color: AppColors.tertiary, size: 22),
                 ),
-                child: const Icon(Icons.campaign_outlined, color: AppColors.tertiary, size: 22),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Belum ada aspirasi',
-                      style: TextStyle(
-                        fontFamily: 'PlusJakartaSans',
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.onSurface,
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Lihat Aspirasi Saya',
+                        style: TextStyle(
+                          fontFamily: 'PlusJakartaSans',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.onSurface,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Tap + untuk kirim aspirasi pertama Anda',
-                      style: TextStyle(
-                        fontFamily: 'PlusJakartaSans',
-                        fontSize: 12,
-                        color: AppColors.onSurfaceVariant.withValues(alpha: 0.8),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Tap untuk melihat dan kirim aspirasi',
+                        style: TextStyle(
+                          fontFamily: 'PlusJakartaSans',
+                          fontSize: 12,
+                          color: AppColors.onSurfaceVariant.withValues(alpha: 0.8),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+                const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.outline),
+              ],
+            ),
           ),
         ),
       ],
@@ -668,13 +676,12 @@ class _HomeScreenState extends State<HomeScreen> {
   // ── Bottom Nav ────────────────────────────────────────────────────────────
   Widget _buildBottomNav() {
     const items = [
-      _NavItem(icon: Icons.home_outlined,      activeIcon: Icons.home_rounded,         label: 'Home'),
-      _NavItem(icon: Icons.campaign_outlined,   activeIcon: Icons.campaign_rounded,     label: 'Aspirasi'),
-      _NavItem(icon: Icons.school_outlined,     activeIcon: Icons.school_rounded,       label: 'Pelatihan'),
-      _NavItem(icon: Icons.folder_shared_outlined, activeIcon: Icons.folder_shared_rounded, label: 'Portofolio'),
-      _NavItem(icon: Icons.person_outline,      activeIcon: Icons.person_rounded,       label: 'Profil'),
+      _NavItem(icon: Icons.home_outlined,          activeIcon: Icons.home_rounded,          label: 'Home'),
+      _NavItem(icon: Icons.campaign_outlined,       activeIcon: Icons.campaign_rounded,      label: 'Aspirasi'),
+      _NavItem(icon: Icons.school_outlined,         activeIcon: Icons.school_rounded,        label: 'Pelatihan'),
+      _NavItem(icon: Icons.folder_shared_outlined,  activeIcon: Icons.folder_shared_rounded, label: 'Portofolio'),
+      _NavItem(icon: Icons.person_outline,          activeIcon: Icons.person_rounded,        label: 'Profil'),
     ];
-
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerLowest.withValues(alpha: 0.92),
@@ -690,8 +697,7 @@ class _HomeScreenState extends State<HomeScreen> {
               final active = _currentIndex == i;
               return GestureDetector(
                 onTap: () => setState(() => _currentIndex = i),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
+                child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -739,7 +745,6 @@ class _HomeScreenState extends State<HomeScreen> {
             BoxShadow(
               color: AppColors.tertiaryAlt.withValues(alpha: 0.5),
               blurRadius: 20,
-              spreadRadius: 0,
               offset: const Offset(0, 4),
             ),
           ],
@@ -749,7 +754,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
   Widget _glow(double size, Color color, double opacity) => Container(
         width: size, height: size,
         decoration: BoxDecoration(
@@ -769,7 +773,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-// ── Data classes ──────────────────────────────────────────────────────────────
 class _QuickAction {
   final IconData icon;
   final String label;
