@@ -4,6 +4,7 @@ import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../auth/login_screen.dart';
 import '../aspiration/aspiration_list_screen.dart';
+import '../training/training_list_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -93,7 +94,7 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               _buildHomeTab(user, greeting),
               const AspirationListScreen(),
-              _buildPlaceholder('Pelatihan', Icons.school_outlined),
+              const TrainingListScreen(),
               _buildPlaceholder('Portofolio', Icons.folder_shared_outlined),
               _buildPlaceholder('Profil', Icons.person_outline),
             ],
