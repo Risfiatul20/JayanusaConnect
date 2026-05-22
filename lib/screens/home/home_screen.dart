@@ -5,6 +5,7 @@ import '../../providers/auth_provider.dart';
 import '../auth/login_screen.dart';
 import '../aspiration/aspiration_list_screen.dart';
 import '../training/training_list_screen.dart';
+import '../profile/profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -96,7 +97,7 @@ class _HomeScreenState extends State<HomeScreen> {
               const AspirationListScreen(),
               const TrainingListScreen(),
               _buildPlaceholder('Portofolio', Icons.folder_shared_outlined),
-              _buildPlaceholder('Profil', Icons.person_outline),
+              const ProfileScreen(),
             ],
           ),
 
